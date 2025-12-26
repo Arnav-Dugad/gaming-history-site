@@ -468,6 +468,9 @@
             const stateRef = useRef({ selectedEvent, autoFocus, visibleEvents, markerScale, theme });
             useEffect(() => { stateRef.current = { selectedEvent, autoFocus, visibleEvents, markerScale, theme }; }, [selectedEvent, autoFocus, visibleEvents, markerScale, theme]);
 
+            const focusTargetRef = useRef(null);
+            useEffect(() => { focusTargetRef.current = focusTarget; }, [focusTarget]);
+
             const markerGroupRef = useRef(null);
             const linesGroupRef = useRef(null);
 
@@ -659,15 +662,7 @@
                 renderer.domElement.addEventListener('touchstart', onPointerDown, {passive: true});
 
                 // --- Animation Loop ---
-                // We define loop in effect below to capture refs correctly
-            }, []); 
-
-            const focusTargetRef = useRef(null);
-            useEffect(() => { focusTargetRef.current = focusTarget; }, [focusTarget]);
-
-            useEffect(() => {
-                if(!globeRef.current) return;
-                
+                // FIX: Loop is now defined INSIDE here to access scene/renderer variables from closure
                 const animate = () => {
                     requestAnimationFrame(animate);
                     const { selectedEvent, markerScale, autoFocus } = stateRef.current;
@@ -678,15 +673,18 @@
                     // FIX: Focus Logic
                     if (focusTargetRef.current) {
                         // Interpolate camera position
-                        cameraRef.current.position.lerp(focusTargetRef.current, 0.04);
-                        controlsRef.current.target.set(0,0,0);
-                        controlsRef.current.autoRotate = false;
+                        camera.position.lerp(focusTargetRef.current, 0.04);
+                        controls.target.set(0,0,0);
+                        controls.autoRotate = false;
                     } else {
                         // Auto-rotate if enabled in settings and not focusing
-                        controlsRef.current.autoRotate = rotationSpeed > 0;
+                        // We access rotation speed from the controls object itself or ref if needed
+                        // But since we are inside closure, controls variable is available
+                        // However, rotationSpeed prop is outside. Let's use controls.autoRotateSpeed which we sync in another effect
+                        controls.autoRotate = controls.autoRotateSpeed > 0;
                     }
                     
-                    controlsRef.current.update();
+                    controls.update();
 
                     // Particles
                     if (particlesRef.current && particlesRef.current.geometry.userData.active) {
@@ -724,10 +722,10 @@
                     // -----------------------------------------------------
                     // POPUP LOGIC REFINED
                     // -----------------------------------------------------
-                    if (activeMarker && popupRef.current && cameraRef.current) {
+                    if (activeMarker && popupRef.current && camera) {
                         const tempV = new THREE.Vector3();
                         activeMarker.getWorldPosition(tempV);
-                        tempV.project(cameraRef.current);
+                        tempV.project(camera);
                         
                         const widthHalf = window.innerWidth / 2;
                         const heightHalf = window.innerHeight / 2;
@@ -736,7 +734,7 @@
 
                         const worldPos = activeMarker.getWorldPosition(new THREE.Vector3());
                         const normal = worldPos.clone().normalize();
-                        const viewDir = cameraRef.current.position.clone().sub(worldPos).normalize();
+                        const viewDir = camera.position.clone().sub(worldPos).normalize();
                         const dot = normal.dot(viewDir);
 
                         // Only show if facing camera and in front
@@ -792,12 +790,28 @@
                         }
                     }
 
-                    renderer.render(scene, cameraRef.current);
+                    renderer.render(scene, camera);
                 };
                 
                 const frameId = requestAnimationFrame(animate);
-                return () => cancelAnimationFrame(frameId);
-            }, [rotationSpeed]); 
+
+                // Handle resize inside effect to access camera/renderer closure variables
+                const handleResize = () => {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                    camera.position.z = window.innerWidth < 768 ? 42 : 32;
+                };
+                window.addEventListener('resize', handleResize);
+
+                return () => {
+                    cancelAnimationFrame(frameId);
+                    window.removeEventListener('resize', handleResize);
+                    mount.removeChild(renderer.domElement);
+                    renderer.domElement.removeEventListener('pointerdown', onPointerDown);
+                    renderer.domElement.removeEventListener('pointerup', onPointerUp);
+                };
+            }, []); // Init effect runs once
 
             // --- Marker/Line Updates ---
             useEffect(() => {
