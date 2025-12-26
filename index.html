@@ -61,7 +61,7 @@
             top: 0;
             left: 0;
             pointer-events: none;
-            z-index: 30;
+            z-index: 30; /* Behind UI overlay */
             transform-origin: bottom center;
             will-change: transform, opacity;
             transition: opacity 0.3s ease-out;
@@ -169,14 +169,14 @@
             left: 0;
             width: 100%;
             height: auto;
-            max-height: 70vh;
+            max-height: 75vh;
             border-top-left-radius: 24px;
             border-top-right-radius: 24px;
             overflow-y: auto;
             transform: translateY(120%);
             transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             z-index: 70; /* Above timeline (50) and backdrop (60) */
-            padding-bottom: 40px; /* Space for safe area */
+            padding-bottom: 120px; /* Space for timeline controls */
         }
         .bottom-sheet.open {
             transform: translateY(0);
@@ -416,7 +416,8 @@
             const raycaster = useRef(new THREE.Raycaster());
             const mouse = useRef(new THREE.Vector2());
             const particlesRef = useRef(null); 
-            
+            const pointerDownPos = useRef({ x: 0, y: 0 });
+
             const selectedEventRef = useRef(selectedEvent);
             const autoFocusRef = useRef(autoFocus);
             const visibleEventsRef = useRef(visibleEvents);
@@ -609,29 +610,40 @@
                 particlesRef.current = particleSystem;
                 scene.add(particleSystem);
 
-                const onCanvasClick = (event) => {
-                    const rect = renderer.domElement.getBoundingClientRect();
-                    mouse.current.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
-                    mouse.current.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+                // --- Improved Interaction Handlers ---
+                const onPointerDown = (event) => {
+                    // Stop auto-flying
+                    targetCameraPosRef.current = null;
+                    
+                    // Record start pos for click vs drag check
+                    pointerDownPos.current = { x: event.clientX, y: event.clientY };
+                };
+                
+                const onPointerUp = (event) => {
+                    const dist = Math.hypot(event.clientX - pointerDownPos.current.x, event.clientY - pointerDownPos.current.y);
+                    
+                    // If drag distance < 5px, treat as click
+                    if (dist < 5) {
+                        const rect = renderer.domElement.getBoundingClientRect();
+                        mouse.current.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+                        mouse.current.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 
-                    raycaster.current.setFromCamera(mouse.current, camera);
-                    const intersects = raycaster.current.intersectObjects(markerGroup.children, true);
+                        raycaster.current.setFromCamera(mouse.current, camera);
+                        const intersects = raycaster.current.intersectObjects(markerGroup.children, true);
 
-                    if (intersects.length > 0) {
-                        const hit = intersects.find(i => i.object.userData && i.object.userData.data);
-                        if (hit) {
-                            onMarkerClick(hit.object.userData.data);
+                        if (intersects.length > 0) {
+                            // Find the object with user data
+                            const hit = intersects.find(i => i.object.userData && i.object.userData.data);
+                            if (hit) {
+                                onMarkerClick(hit.object.userData.data);
+                            }
                         }
                     }
                 };
 
-                const onPointerDown = () => {
-                    targetCameraPosRef.current = null;
-                };
-
-                renderer.domElement.addEventListener('click', onCanvasClick);
+                // Use Pointer Events for unified Touch/Mouse support
                 renderer.domElement.addEventListener('pointerdown', onPointerDown);
-                renderer.domElement.addEventListener('touchstart', onPointerDown, {passive: true});
+                renderer.domElement.addEventListener('pointerup', onPointerUp);
 
                 const tempV = new THREE.Vector3();
                 const animate = () => {
@@ -652,7 +664,7 @@
                         const positions = pGeo.attributes.position.array;
                         const velocities = pGeo.userData.velocities;
                         
-                        pGeo.userData.time += 0.003; // Even Slower
+                        pGeo.userData.time += 0.002; // SLOWER PARTICLES
                         particlesRef.current.material.opacity = 1 - pGeo.userData.time;
 
                         if (pGeo.userData.time >= 1) {
@@ -747,8 +759,8 @@
 
                 return () => {
                     window.removeEventListener('resize', handleResize);
-                    renderer.domElement.removeEventListener('click', onCanvasClick);
                     renderer.domElement.removeEventListener('pointerdown', onPointerDown);
+                    renderer.domElement.removeEventListener('pointerup', onPointerUp);
                     mount.removeChild(renderer.domElement);
                 };
             }, []);
@@ -841,7 +853,7 @@
              );
         };
 
-        // --- Main UI Application ---
+        // --- Main App Component ---
         const App = () => {
             const minYear = 1970;
             const maxYear = 2025; 
@@ -871,7 +883,7 @@
             const [isStatsOpen, setIsStatsOpen] = useState(true);
             const [isGraphOpen, setIsGraphOpen] = useState(true);
             const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(true);
-            
+
             const [activeFilters, setActiveFilters] = useState({
                 platform: "All",
                 genre: "All",
