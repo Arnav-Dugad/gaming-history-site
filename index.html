@@ -740,8 +740,9 @@
                         
                         // Calculate world position of marker TIP
                         // Normalize vector (direction from center) and scale by (radius + height)
-                        // Earth Radius = 10. Marker Height = 6 (when active).
-                        // So Tip is at 16 units from center.
+                        // Earth Radius = 10. Marker Height = 6 (when active) * scale.
+                        // However, simpler visual fix: Tip is roughly at radius 16 from center
+                        // since we scaled the marker up.
                         tempV.normalize().multiplyScalar(16); 
 
                         // Project tip position to screen
@@ -851,13 +852,14 @@
 
                     const geo = new THREE.CylinderGeometry(radius, 0.05, height, 8);
                     geo.translate(0, height/2, 0);
-                    geo.rotateX(Math.PI / 2);
                     const mat = new THREE.MeshBasicMaterial({ color });
                     const mesh = new THREE.Mesh(geo, mat);
                     
                     const pos = latLongToVector3(m.lat, m.lon, 10);
                     mesh.position.copy(pos);
-                    mesh.lookAt(0,0,0);
+                    // Point outwards by looking at a point twice as far from center
+                    mesh.lookAt(pos.clone().multiplyScalar(2));
+                    
                     mesh.userData = { data: m, offset: Math.random() * 100, active: m.year === currentYear };
                     group.add(mesh);
                 });
