@@ -71,7 +71,7 @@
             width: 100%;
             height: 100%;
             pointer-events: none;
-            z-index: 80; /* Increased z-index to stay above bottom sheet */
+            z-index: 100; /* High z-index to stay above everything */
             overflow: hidden;
         }
 
@@ -465,8 +465,8 @@
             // Focus state
             const [focusTarget, setFocusTarget] = useState(null);
 
-            const stateRef = useRef({ selectedEvent, autoFocus, visibleEvents, markerScale, theme });
-            useEffect(() => { stateRef.current = { selectedEvent, autoFocus, visibleEvents, markerScale, theme }; }, [selectedEvent, autoFocus, visibleEvents, markerScale, theme]);
+            const stateRef = useRef({ selectedEvent, autoFocus, visibleEvents, markerScale, theme, rotationSpeed });
+            useEffect(() => { stateRef.current = { selectedEvent, autoFocus, visibleEvents, markerScale, theme, rotationSpeed }; }, [selectedEvent, autoFocus, visibleEvents, markerScale, theme, rotationSpeed]);
 
             const focusTargetRef = useRef(null);
             useEffect(() => { focusTargetRef.current = focusTarget; }, [focusTarget]);
@@ -665,7 +665,7 @@
                 // FIX: Loop is now defined INSIDE here to access scene/renderer variables from closure
                 const animate = () => {
                     requestAnimationFrame(animate);
-                    const { selectedEvent, markerScale, autoFocus } = stateRef.current;
+                    const { selectedEvent, markerScale, autoFocus, rotationSpeed } = stateRef.current;
                     const time = Date.now() * 0.001;
                     
                     if (cloudRef.current && cloudRef.current.visible) cloudRef.current.rotation.y += 0.0003;
@@ -678,10 +678,9 @@
                         controls.autoRotate = false;
                     } else {
                         // Auto-rotate if enabled in settings and not focusing
-                        // We access rotation speed from the controls object itself or ref if needed
-                        // But since we are inside closure, controls variable is available
-                        // However, rotationSpeed prop is outside. Let's use controls.autoRotateSpeed which we sync in another effect
-                        controls.autoRotate = controls.autoRotateSpeed > 0;
+                        // We access rotation speed from the stateRef
+                        controls.autoRotate = rotationSpeed > 0;
+                        controls.autoRotateSpeed = rotationSpeed;
                     }
                     
                     controls.update();
@@ -1153,6 +1152,10 @@
                                  <label className="flex justify-between items-center cursor-pointer group">
                                      <span className="text-xs group-hover:text-white transition-colors">Show Stars</span>
                                      <input type="checkbox" className="accent-blue-500 w-4 h-4" checked={showStars} onChange={e=>setShowStars(e.target.checked)}/>
+                                 </label>
+                                 <label className="flex justify-between items-center cursor-pointer group">
+                                     <span className="text-xs group-hover:text-white transition-colors">Auto-Focus Event</span>
+                                     <input type="checkbox" className="accent-blue-500 w-4 h-4" checked={autoFocus} onChange={e=>setAutoFocus(e.target.checked)}/>
                                  </label>
                                  <label className="flex justify-between items-center cursor-pointer group">
                                      <span className="text-xs group-hover:text-white transition-colors flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span> Retro CRT Mode</span>
