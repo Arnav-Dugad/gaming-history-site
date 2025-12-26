@@ -45,7 +45,7 @@
             overflow: hidden;
         }
 
-        /* Glassmorphism utility */
+        /* Glassmorphism */
         .glass-panel {
             background: rgba(10, 15, 30, 0.85);
             backdrop-filter: blur(16px);
@@ -55,7 +55,7 @@
             transition: all 0.3s ease;
         }
 
-        /* Pop-up Card Specifics */
+        /* Pop-up Card */
         #popup-card-container {
             position: absolute;
             top: 0;
@@ -72,6 +72,7 @@
             padding-bottom: 45px;
             pointer-events: auto;
             width: 360px; 
+            max-width: 90vw;
         }
         
         @media (max-width: 640px) {
@@ -107,7 +108,7 @@
             box-shadow: 0 0 12px #ffffff, 0 0 24px #3b82f6;
         }
 
-        /* Range Slider Styling */
+        /* Sliders */
         input[type=range] {
             -webkit-appearance: none;
             background: transparent;
@@ -140,6 +141,7 @@
             z-index: 0;
             background: #000;
             cursor: grab;
+            touch-action: none;
         }
         #canvas-container:active { cursor: grabbing; }
 
@@ -176,7 +178,7 @@
             transform: translateY(120%);
             transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
             z-index: 70; /* Above timeline (50) and backdrop (60) */
-            padding-bottom: 120px; /* Space for timeline controls */
+            padding-bottom: 140px; /* Space for timeline controls so content isn't hidden */
         }
         .bottom-sheet.open {
             transform: translateY(0);
@@ -204,6 +206,11 @@
             background-color: rgba(0,0,0,0.6);
             backdrop-filter: blur(4px);
         }
+        
+        /* Custom z-indexes */
+        .z-60 { z-index: 60; }
+        .z-70 { z-index: 70; }
+        .z-80 { z-index: 80; }
     </style>
 </head>
 <body>
@@ -366,19 +373,14 @@
             const height = 120;
             const padding = 25;
             const [hoveredPoint, setHoveredPoint] = useState(null);
-            
-            // Current progress
             const activePoints = dataPoints.filter(p => p.year <= currentYear);
             const currentCount = getGamerCount(currentYear);
 
             const getX = (year) => padding + ((year - minYear) / (maxYear - minYear)) * (width - 2*padding);
             const getY = (count) => height - padding - (count / maxCount) * (height - 2*padding);
 
-            // Path for ALL points (greyed out)
             const fullPath = `M ${dataPoints.map(p => `${getX(p.year)},${getY(p.count)}`).join(' L ')}`;
-            // Path for ACTIVE points (colored)
             const activePath = activePoints.length > 1 ? `M ${activePoints.map(p => `${getX(p.year)},${getY(p.count)}`).join(' L ')}` : '';
-
             const yTicks = [0, 1000, 2000, 3000];
             const xTicks = [1970, 1980, 1990, 2000, 2010, 2020];
 
@@ -388,7 +390,6 @@
                         {currentCount > 1000 ? (currentCount/1000).toFixed(1) + 'B' : currentCount.toFixed(0) + 'M'} Active
                     </div>
                     <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} className="overflow-visible">
-                        {/* Grid */}
                         {yTicks.map(tick => (
                             <g key={tick}>
                                 <line x1={padding} y1={getY(tick)} x2={width-padding} y2={getY(tick)} stroke="#333" strokeWidth="1"/>
@@ -398,25 +399,12 @@
                         {xTicks.map(tick => (
                             <text key={tick} x={getX(tick)} y={height-5} textAnchor="middle" fill="#666" fontSize="8">{tick}</text>
                         ))}
-                        
-                        {/* Background Path */}
                         <path d={fullPath} fill="none" stroke="#222" strokeWidth="2" />
-                        
-                        {/* Active Path */}
                         <path d={activePath} fill="none" stroke="#3b82f6" strokeWidth="2" />
-
-                        {/* Interactive Points */}
                         {dataPoints.map((p, i) => (
-                            <rect key={i} x={getX(p.year) - 4} y={0} width="8" height={height} fill="transparent" 
-                                onMouseEnter={() => setHoveredPoint(p)} onMouseLeave={() => setHoveredPoint(null)} className="cursor-crosshair"/>
+                            <rect key={i} x={getX(p.year) - 4} y={0} width="8" height={height} fill="transparent" onMouseEnter={() => setHoveredPoint(p)} onMouseLeave={() => setHoveredPoint(null)} className="cursor-crosshair"/>
                         ))}
-
-                        {/* Current Year Dot */}
-                        {activePoints.length > 0 && (
-                            <circle cx={getX(activePoints[activePoints.length-1].year)} cy={getY(activePoints[activePoints.length-1].count)} r="3" fill="#fff" className="animate-pulse"/>
-                        )}
-
-                        {/* Hover Tooltip */}
+                        {activePoints.length > 0 && <circle cx={getX(activePoints[activePoints.length-1].year)} cy={getY(activePoints[activePoints.length-1].count)} r="3" fill="#fff" className="animate-pulse"/>}
                         {hoveredPoint && (
                             <g>
                                 <line x1={getX(hoveredPoint.year)} y1={padding} x2={getX(hoveredPoint.year)} y2={height-padding} stroke="#fbbf24" strokeWidth="1" strokeDasharray="2,2" />
@@ -617,7 +605,7 @@
                 
                 const onPointerUp = (event) => {
                     const dist = Math.hypot(event.clientX - pointerDownPos.current.x, event.clientY - pointerDownPos.current.y);
-                    if (dist < 5) {
+                    if (dist < 10) { // Increased threshold for mobile tap
                         const rect = renderer.domElement.getBoundingClientRect();
                         mouse.current.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
                         mouse.current.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
@@ -638,7 +626,6 @@
                 const tempV = new THREE.Vector3();
                 const animate = () => {
                     requestAnimationFrame(animate);
-                    // Use Ref to access latest state inside loop
                     const { selectedEvent, autoFocus, markerScale } = stateRef.current;
                     const time = Date.now() * 0.001;
 
@@ -994,7 +981,7 @@
                     
                     {/* Backdrop */}
                     {(mobileTab || (showSearch && window.innerWidth < 640) || (showFilters && window.innerWidth < 640) || (showSettings && window.innerWidth < 640)) && 
-                        <div className="fixed inset-0 z-40 modal-backdrop transition-opacity" onClick={() => { setMobileTab(null); setShowSearch(false); setShowFilters(false); setShowSettings(false); }}></div>
+                        <div className="fixed inset-0 z-60 modal-backdrop transition-opacity" onClick={() => { setMobileTab(null); setShowSearch(false); setShowFilters(false); setShowSettings(false); }}></div>
                     }
 
                     <Globe 
@@ -1054,7 +1041,7 @@
 
                     {/* MODALS */}
                     {showSearch && (
-                        <div className={`glass-panel p-4 z-60 ${window.innerWidth < 640 ? 'fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-11/12 rounded-xl' : 'absolute top-24 right-4 w-72 rounded-lg'}`}>
+                        <div className={`glass-panel p-4 z-80 ${window.innerWidth < 640 ? 'fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-11/12 rounded-xl' : 'absolute top-24 right-4 w-72 rounded-lg'}`}>
                             <div className="flex justify-between mb-2"><span className="text-xs text-gray-400">Search</span><button onClick={()=>setShowSearch(false)}><CloseIcon size={16}/></button></div>
                             <input type="text" autoFocus className="w-full bg-black/50 border border-white/20 rounded p-2 text-sm text-white mb-2" placeholder="Search game..." value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} />
                             <div className="max-h-60 overflow-y-auto custom-scrollbar">
@@ -1068,7 +1055,7 @@
                     )}
 
                     {showSettings && (
-                         <div className={`glass-panel p-4 z-60 flex flex-col gap-4 ${window.innerWidth < 640 ? 'fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-11/12 max-h-[80vh] overflow-y-auto rounded-xl' : 'absolute top-24 right-4 w-72 max-h-[70vh] overflow-y-auto rounded-lg'}`}>
+                         <div className={`glass-panel p-4 z-80 flex flex-col gap-4 ${window.innerWidth < 640 ? 'fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-11/12 max-h-[80vh] overflow-y-auto rounded-xl' : 'absolute top-24 right-4 w-72 max-h-[70vh] overflow-y-auto rounded-lg'}`}>
                              <div className="flex justify-between"><span className="text-xs text-gray-400">Settings</span><button onClick={()=>setShowSettings(false)}><CloseIcon/></button></div>
                              <div>
                                  <div className="text-xs text-blue-300 font-bold mb-2">THEME</div>
@@ -1087,7 +1074,7 @@
                     )}
                     
                     {showFilters && (
-                        <div className={`glass-panel p-4 z-60 space-y-4 ${window.innerWidth < 640 ? 'fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-11/12 rounded-xl' : 'absolute top-24 right-4 w-64 rounded-lg'}`}>
+                        <div className={`glass-panel p-4 z-80 space-y-4 ${window.innerWidth < 640 ? 'fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-11/12 rounded-xl' : 'absolute top-24 right-4 w-64 rounded-lg'}`}>
                              <div className="flex justify-between"><span className="text-xs text-gray-400">Filters</span><button onClick={()=>setShowFilters(false)}><CloseIcon/></button></div>
                              <div>
                                  <div className="text-xs text-gray-400 mb-1">Platform</div>
@@ -1099,7 +1086,7 @@
                     )}
 
                     {/* MOBILE BOTTOM DOCK */}
-                    <div className="fixed bottom-28 left-0 w-full z-40 pointer-events-auto sm:hidden px-4 flex justify-center gap-6">
+                    <div className="fixed bottom-28 left-0 w-full z-60 pointer-events-auto sm:hidden px-4 flex justify-center gap-6">
                         {[
                             {id:'stats', icon:<TrophyIcon/>}, {id:'leaderboard', icon:<ChartIcon/>}, {id:'graph', icon:<DollarIcon/>}
                         ].map(t => (
