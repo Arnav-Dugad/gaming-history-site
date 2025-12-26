@@ -71,7 +71,7 @@
             width: 100%;
             height: 100%;
             pointer-events: none;
-            z-index: 40; 
+            z-index: 80; /* Increased z-index to stay above bottom sheet */
             overflow: hidden;
         }
 
@@ -247,13 +247,15 @@
         .watermark {
             position: fixed;
             bottom: 20px;
-            right: 20px;
+            left: 50%;
+            transform: translateX(-50%);
             font-size: 10px;
             color: rgba(255, 255, 255, 0.3);
             pointer-events: none;
             z-index: 9999;
             font-weight: 500;
             letter-spacing: 0.5px;
+            white-space: nowrap;
         }
     </style>
 </head>
@@ -529,8 +531,9 @@
 
             useEffect(() => {
                 // FIX: Always focus when an event is selected, or if autoFocus is enabled
+                // Reduced zoom: changed radius from 24 to 32 (Zoomed out more)
                 if (selectedEvent && cameraRef.current) {
-                    const radius = 24; 
+                    const radius = 32; 
                     const vec = latLongToVector3(selectedEvent.lat, selectedEvent.lon, radius);
                     setFocusTarget(vec);
                 } else if (!selectedEvent) {
@@ -656,37 +659,12 @@
                 renderer.domElement.addEventListener('touchstart', onPointerDown, {passive: true});
 
                 // --- Animation Loop ---
-                const tempV = new THREE.Vector3();
-                let currentFocusTarget = null; // Local var for animation closure
+                // We define loop in effect below to capture refs correctly
+            }, []); 
 
-                const animate = () => {
-                    requestAnimationFrame(animate);
-                    const { selectedEvent, autoFocus, markerScale } = stateRef.current;
-                    const time = Date.now() * 0.001;
-
-                    if (cloudRef.current && cloudRef.current.visible) cloudRef.current.rotation.y += 0.0003;
-                    
-                    // FIX: Camera Focus Logic
-                    // We check the React state hook via the closure or ref logic
-                    // Here we access the state passed down via props, but we need the latest value
-                    // The 'focusTarget' state is updated via setFocusTarget
-                    // But inside animate loop, we can't access updated state easily without a Ref unless we use the mutable ref pattern.
-                    // However, we set 'focusTarget' in state, so we need to pass it into a Ref or use it from props if it was a prop. 
-                    // Since it's local state, let's use a Ref for the target to ensure the loop sees it.
-                    // ACTUALLY: We will rely on setFocusTarget triggering re-renders is tricky with ThreeJS loops.
-                    // BETTER: Use a ref for the focus target inside the component.
-                };
-
-                // RE-IMPLEMENTING ANIMATE LOOP WITH REF ACCESS FOR FOCUS
-                // We need to move the loop definition to ensure it captures the ref
-            }, []); // End useEffect
-
-            // We need a way to pass the focus target to the animation loop.
-            // Let's use a ref that we update when the state changes.
             const focusTargetRef = useRef(null);
             useEffect(() => { focusTargetRef.current = focusTarget; }, [focusTarget]);
 
-            // Re-bind animate loop logic cleanly
             useEffect(() => {
                 if(!globeRef.current) return;
                 
@@ -702,15 +680,9 @@
                         // Interpolate camera position
                         cameraRef.current.position.lerp(focusTargetRef.current, 0.04);
                         controlsRef.current.target.set(0,0,0);
-                        
-                        // Stop focusing if close enough? No, keep locked for smoothness until user interaction
-                        // But we DO need to stop rotation
                         controlsRef.current.autoRotate = false;
                     } else {
                         // Auto-rotate if enabled in settings and not focusing
-                        controlsRef.current.autoRotate = rotationSpeed > 0 && !stateRef.current.autoFocus; // Wait, autoFocus prop is "Auto-Focus Event" toggle? 
-                        // Let's interpret rotationSpeed > 0 as "Idle Rotation".
-                        // If we are just idling, rotate.
                         controlsRef.current.autoRotate = rotationSpeed > 0;
                     }
                     
@@ -771,8 +743,8 @@
                         if (dot > 0.2 && tempV.z < 1) { 
                             const popupAnchor = popupRef.current.querySelector('.popup-anchor');
                             if (popupAnchor) {
-                                // Clamp X to keep it inside screen
-                                const cardWidth = 340;
+                                // Clamp X to keep it inside screen - Adjusted for mobile width
+                                const cardWidth = window.innerWidth < 640 ? 300 : 340;
                                 const padding = 20;
                                 let clampedX = x;
                                 if (x < cardWidth/2 + padding) clampedX = cardWidth/2 + padding;
@@ -825,7 +797,7 @@
                 
                 const frameId = requestAnimationFrame(animate);
                 return () => cancelAnimationFrame(frameId);
-            }, [rotationSpeed]); // Re-bind if rotation speed setting changes, though refs handle most
+            }, [rotationSpeed]); 
 
             // --- Marker/Line Updates ---
             useEffect(() => {
@@ -913,7 +885,7 @@
             const [rotationSpeed, setRotationSpeed] = useState(0.5);
             const [playbackSpeed, setPlaybackSpeed] = useState(1200);
             const [markerScale, setMarkerScale] = useState(1);
-            const [autoFocus, setAutoFocus] = useState(true); // Default to TRUE for "Auto Focus on Play" concept if desired, but user clicked focus works independently now
+            const [autoFocus, setAutoFocus] = useState(true); // Default to TRUE
             const [showStars, setShowStars] = useState(true);
             const [showClouds, setShowClouds] = useState(true);
             const [atmosphereIntensity, setAtmosphereIntensity] = useState(1);
@@ -1169,8 +1141,8 @@
                                      <input type="checkbox" className="accent-blue-500 w-4 h-4" checked={showStars} onChange={e=>setShowStars(e.target.checked)}/>
                                  </label>
                                  <label className="flex justify-between items-center cursor-pointer group">
-                                     <span className="text-xs group-hover:text-purple-400 transition-colors flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-purple-500 animate-pulse"></span> Retro CRT Mode</span>
-                                     <input type="checkbox" className="accent-purple-500 w-4 h-4" checked={retroMode} onChange={e=>setRetroMode(e.target.checked)}/>
+                                     <span className="text-xs group-hover:text-white transition-colors flex items-center gap-2"><span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></span> Retro CRT Mode</span>
+                                     <input type="checkbox" className="accent-blue-500 w-4 h-4" checked={retroMode} onChange={e=>setRetroMode(e.target.checked)}/>
                                  </label>
                              </div>
                          </div>
