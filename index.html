@@ -1,0 +1,1314 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Global History of Gaming</title>
+
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- React and ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- Three.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap');
+
+        body, html {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            font-family: 'Space Grotesk', sans-serif;
+            background-color: #000000;
+            color: white;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        #app-root {
+            position: fixed;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+        }
+
+        /* Glassmorphism utility */
+        .glass-panel {
+            background: rgba(10, 15, 30, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        /* Pop-up Card Specifics */
+        #popup-card-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 30; /* Behind UI overlay */
+            transform-origin: bottom center;
+            will-change: transform, opacity;
+            transition: opacity 0.3s ease-out;
+        }
+
+        .popup-content {
+            transform: translate(-50%, -100%);
+            padding-bottom: 45px;
+            pointer-events: auto;
+            width: 360px; 
+        }
+        
+        @media (max-width: 640px) {
+            .popup-content {
+                width: 300px;
+                padding-bottom: 30px;
+            }
+        }
+
+        .connector-line {
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            width: 2px;
+            height: 45px;
+            background: linear-gradient(to top, rgba(59, 130, 246, 0), rgba(255, 255, 255, 0.9));
+            transform: translateX(-50%);
+        }
+        
+        @media (max-width: 640px) {
+            .connector-line { height: 30px; }
+        }
+
+        .connector-dot {
+            position: absolute;
+            bottom: -4px;
+            left: 50%;
+            width: 10px;
+            height: 10px;
+            background: #ffffff;
+            border-radius: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 0 12px #ffffff, 0 0 24px #3b82f6;
+        }
+
+        /* Range Slider Styling */
+        input[type=range] {
+            -webkit-appearance: none;
+            background: transparent;
+        }
+        input[type=range]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            height: 20px;
+            width: 20px;
+            border-radius: 50%;
+            background: #3b82f6;
+            cursor: pointer;
+            margin-top: -8px;
+            box-shadow: 0 0 10px rgba(59, 130, 246, 0.5);
+            border: 2px solid white;
+        }
+        input[type=range]::-webkit-slider-runnable-track {
+            width: 100%;
+            height: 4px;
+            cursor: pointer;
+            background: #1f2937;
+            border-radius: 2px;
+        }
+        
+        #canvas-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            background: #000;
+            cursor: grab;
+        }
+        #canvas-container:active { cursor: grabbing; }
+
+        .toggle-checkbox:checked { right: 0; border-color: #3b82f6; }
+        .toggle-checkbox:checked + .toggle-label { background-color: #3b82f6; }
+        .bar-fill { transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1); }
+        
+        /* Collapsible Transition */
+        .collapsible-container {
+            overflow: hidden;
+            transition: max-height 0.4s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease;
+        }
+        .collapsed {
+            max-height: 0px !important;
+            opacity: 0;
+            margin: 0 !important;
+        }
+        .expanded {
+            max-height: 800px;
+            opacity: 1;
+        }
+        
+        /* Mobile Bottom Sheet */
+        .bottom-sheet {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: auto;
+            max-height: 70vh;
+            border-top-left-radius: 24px;
+            border-top-right-radius: 24px;
+            overflow-y: auto;
+            transform: translateY(120%);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            z-index: 60; 
+            padding-bottom: 120px; /* Space for timeline controls */
+        }
+        .bottom-sheet.open {
+            transform: translateY(0);
+        }
+
+        /* Scanlines */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,0) 50%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.1));
+            background-size: 100% 4px;
+            pointer-events: none;
+            z-index: 9998;
+            animation: fadeIn 0.5s;
+        }
+        .logo-shadow { filter: drop-shadow(0 4px 6px rgba(0,0,0,0.8)); }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Modal Backdrop */
+        .modal-backdrop {
+            background-color: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+        }
+    </style>
+</head>
+<body>
+    <div id="app-root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef, useMemo } = React;
+
+        // ==========================================
+        // 1. ALL DATA & HELPERS DEFINED FIRST
+        // ==========================================
+
+        const milestones = [
+            { year: 1972, title: "Pong", dev: "Atari", loc: "Sunnyvale, CA", lat: 37.36, lon: -122.03, type: "Arcade", platform: "Arcade", genre: "Arcade", region: "USA", desc: "The arcade hit that launched the video game industry.", impact: "First commercial success", cover: "https://placehold.co/600x350/000000/333333?text=.", logo: "https://placehold.co/400x150/transparent/FFFFFF?text=PONG" },
+            { year: 1978, title: "Space Invaders", dev: "Taito", loc: "Tokyo, Japan", lat: 35.67, lon: 139.65, type: "Arcade", platform: "Arcade", genre: "Shooter", region: "Japan", desc: "Sparked a global phenomenon and coin shortage in Japan.", impact: "$3.8 Billion Revenue (1982)", cover: "https://placehold.co/600x350/000022/00FF00?text=.", logo: "https://placehold.co/400x150/transparent/00FF00?text=SPACE+INVADERS" },
+            { year: 1980, title: "Pac-Man", dev: "Namco", loc: "Tokyo, Japan", lat: 35.67, lon: 139.65, type: "Arcade", platform: "Arcade", genre: "Arcade", region: "Japan", desc: "A cultural icon that appealed to a mass audience.", impact: "Highest-grossing game ever", cover: "https://placehold.co/600x350/000000/FFFF00?text=.", logo: "https://placehold.co/400x200/transparent/FFFF00?text=PAC-MAN" },
+            { year: 1981, title: "Donkey Kong", dev: "Nintendo", loc: "Kyoto, Japan", lat: 35.01, lon: 135.76, type: "Arcade", platform: "Arcade", genre: "Platformer", region: "Japan", desc: "Introduced Jumpman (Mario) and saved Nintendo of America.", impact: "Created the Platformer genre", cover: "https://placehold.co/600x350/550000/FF0000?text=.", logo: "https://placehold.co/400x200/transparent/FFFFFF?text=Donkey+Kong" },
+            { year: 1983, title: "Mario Bros.", dev: "Nintendo", loc: "Kyoto, Japan", lat: 35.01, lon: 135.76, type: "Arcade", platform: "Arcade", genre: "Platformer", region: "Japan", desc: "Introduced Luigi and the iconic plumbing duo.", impact: "First appearance of Luigi", cover: "https://placehold.co/600x350/003300/00FF00?text=.", logo: "https://placehold.co/400x200/transparent/FFFFFF?text=MARIO+BROS." },
+            { year: 1984, title: "Tetris", dev: "Alexey Pajitnov", loc: "Moscow, Russia", lat: 55.75, lon: 37.61, type: "PC", platform: "PC", genre: "Puzzle", region: "Europe", desc: "The addictive puzzle game created behind the Iron Curtain.", impact: "520 Million Copies Sold", cover: "https://placehold.co/600x350/111111/444444?text=.", logo: "https://placehold.co/400x150/transparent/FF0000?text=TETRIS" },
+            { year: 1985, title: "NES Launch", dev: "Nintendo", loc: "Kyoto, Japan", lat: 35.01, lon: 135.76, type: "Console", platform: "Console", genre: "Hardware", region: "Japan", desc: "Revived the US home console market after the '83 crash.", impact: "62 Million Units Sold", cover: "https://placehold.co/600x350/333333/888888?text=.", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/NES_logo.svg/640px-NES_logo.svg.png" },
+            { year: 1986, title: "Legend of Zelda", dev: "Nintendo", loc: "Kyoto, Japan", lat: 35.01, lon: 135.76, type: "Console", platform: "Console", genre: "Adventure", region: "Japan", desc: "Introduced save games and non-linear exploration.", impact: "Defined Action-Adventure", cover: "https://placehold.co/600x350/003300/D4AF37?text=.", logo: "https://placehold.co/400x200/transparent/D4AF37?text=The+Legend+of+Zelda" },
+            { year: 1989, title: "Game Boy", dev: "Nintendo", loc: "Kyoto, Japan", lat: 35.01, lon: 135.76, type: "Handheld", platform: "Mobile", genre: "Hardware", region: "Japan", desc: "Portable gaming popularized by bundling Tetris.", impact: "118 Million Units Sold", cover: "https://placehold.co/600x350/CCCCCC/999999?text=.", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Game_Boy_logo.svg/1280px-Game_Boy_logo.svg.png" },
+            { year: 1991, title: "Sonic the Hedgehog", dev: "Sega", loc: "Tokyo, Japan", lat: 35.67, lon: 139.65, type: "Console", platform: "Console", genre: "Platformer", region: "Japan", desc: "Sega's mascot who gave Mario a run for his money.", impact: "15 Million Copies Sold", cover: "https://placehold.co/600x350/000088/FFFFFF?text=.", logo: "https://placehold.co/400x200/transparent/FFFFFF?text=SONIC" },
+            { year: 1991, title: "Street Fighter II", dev: "Capcom", loc: "Osaka, Japan", lat: 34.69, lon: 135.50, type: "Arcade", platform: "Arcade", genre: "Fighting", region: "Japan", desc: "Defined the fighting game genre and competitive play.", impact: "$10 Billion+ Total Revenue", cover: "https://placehold.co/600x350/880000/FFFF00?text=.", logo: "https://placehold.co/400x200/transparent/FFFF00?text=STREET+FIGHTER+II" },
+            { year: 1993, title: "Doom", dev: "id Software", loc: "Mesquite, TX", lat: 32.76, lon: -96.59, type: "PC", platform: "PC", genre: "FPS", region: "USA", desc: "Pioneered the FPS genre and networked multiplayer.", impact: "Father of FPS", cover: "https://placehold.co/600x350/330000/FF0000?text=.", logo: "https://placehold.co/400x200/transparent/FF8800?text=DOOM" },
+            { year: 1994, title: "PlayStation", dev: "Sony", loc: "Tokyo, Japan", lat: 35.67, lon: 139.65, type: "Console", platform: "Console", genre: "Hardware", region: "Japan", desc: "Sony's debut console that popularized 3D gaming on CD.", impact: "102 Million Units Sold", cover: "https://placehold.co/600x350/CCCCCC/EEEEEE?text=.", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Playstation_logo_colour.svg/640px-Playstation_logo_colour.svg.png" },
+            { year: 1996, title: "Quake", dev: "id Software", loc: "Mesquite, TX", lat: 32.76, lon: -96.59, type: "PC", platform: "PC", genre: "FPS", region: "USA", desc: "Introduced true 3D rendering and online esports.", impact: "First True 3D Engine", cover: "https://placehold.co/600x350/332200/AA6600?text=.", logo: "https://placehold.co/400x200/transparent/AA6600?text=QUAKE" },
+            { year: 1996, title: "Super Mario 64", dev: "Nintendo", loc: "Kyoto, Japan", lat: 35.01, lon: 135.76, type: "Console", platform: "Console", genre: "Platformer", region: "Japan", desc: "Defined movement in 3D spaces for decades to come.", impact: "12 Million Copies Sold", cover: "https://placehold.co/600x350/0000FF/FF0000?text=.", logo: "https://placehold.co/400x200/transparent/FF0000?text=Super+Mario+64" },
+            { year: 1997, title: "Ultima Online", dev: "Origin Systems", loc: "Austin, TX", lat: 30.26, lon: -97.74, type: "MMO", platform: "Online", genre: "MMO", region: "USA", desc: "The grandfather of modern MMORPGs.", impact: "First Massively Popular MMO", cover: "https://placehold.co/600x350/000000/FF0000?text=.", logo: "https://placehold.co/400x200/transparent/FF0000?text=ULTIMA+ONLINE" },
+            { year: 1997, title: "Final Fantasy VII", dev: "Square", loc: "Tokyo, Japan", lat: 35.67, lon: 139.65, type: "Console", platform: "Console", genre: "RPG", region: "Japan", desc: "Popularized JRPGs globally with cinematic storytelling.", impact: "13 Million Copies Sold", cover: "https://placehold.co/600x350/001111/00FF99?text=.", logo: "https://placehold.co/400x200/transparent/FFFFFF?text=Final+Fantasy+VII" },
+            { year: 1998, title: "Half-Life", dev: "Valve", loc: "Kirkland, WA", lat: 47.67, lon: -122.20, type: "PC", platform: "PC", genre: "FPS", region: "USA", desc: "Revolutionized narrative storytelling in shooters.", impact: "50+ Game of the Year Awards", cover: "https://placehold.co/600x350/221100/FF9900?text=.", logo: "https://placehold.co/400x150/transparent/FF9900?text=HALF-LIFE" },
+            { year: 2000, title: "The Sims", dev: "Maxis", loc: "Walnut Creek, CA", lat: 37.91, lon: -122.06, type: "PC", platform: "PC", genre: "Simulation", region: "USA", desc: "The best-selling life simulation game.", impact: "200 Million Series Sales", cover: "https://placehold.co/600x350/0000AA/FFFFFF?text=.", logo: "https://placehold.co/400x150/transparent/FFFFFF?text=The+Sims" },
+            { year: 2000, title: "PlayStation 2", dev: "Sony", loc: "Tokyo, Japan", lat: 35.67, lon: 139.65, type: "Console", platform: "Console", genre: "Hardware", region: "Japan", desc: "The best-selling console of all time.", impact: "155 Million Units Sold", cover: "https://placehold.co/600x350/000000/111111?text=.", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/PS2_logo.svg/640px-PS2_logo.svg.png" },
+            { year: 2001, title: "Halo: CE", dev: "Bungie", loc: "Redmond, WA", lat: 47.67, lon: -122.12, type: "Console", platform: "Console", genre: "FPS", region: "USA", desc: "Proved FPS could work perfectly on consoles. Launched with original Xbox.", impact: "Launch title for Xbox", cover: "https://placehold.co/600x350/223322/FFFFFF?text=.", logo: "https://placehold.co/400x150/transparent/FFFFFF?text=HALO" },
+            { year: 2003, title: "Steam", dev: "Valve", loc: "Bellevue, WA", lat: 47.61, lon: -122.20, type: "Service", platform: "Online", genre: "Service", region: "USA", desc: "Changed PC gaming distribution forever.", impact: "132M Monthly Active Users", cover: "https://placehold.co/600x350/112233/000000?text=.", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Steam_icon_logo.svg/640px-Steam_icon_logo.svg.png" },
+            { year: 2004, title: "Halo 2 (Xbox Live)", dev: "Bungie", loc: "Redmond, WA", lat: 47.67, lon: -122.12, type: "Console", platform: "Console", genre: "FPS", region: "USA", desc: "Revolutionized online matchmaking and voice chat on consoles.", impact: "Defined Xbox Live", cover: "https://placehold.co/600x350/113311/88AAFF?text=.", logo: "https://placehold.co/400x150/transparent/FFFFFF?text=HALO+2" },
+            { year: 2004, title: "World of Warcraft", dev: "Blizzard", loc: "Irvine, CA", lat: 33.68, lon: -117.82, type: "MMO", platform: "Online", genre: "MMO", region: "USA", desc: "Brought MMORPGs to the mainstream masses.", impact: "12M Peak Subscribers", cover: "https://placehold.co/600x350/110000/331100?text=.", logo: "https://placehold.co/400x200/transparent/FFCC00?text=World+of+Warcraft" },
+            { year: 2005, title: "Xbox 360 Launch", dev: "Microsoft", loc: "Redmond, WA", lat: 47.67, lon: -122.12, type: "Console", platform: "Console", genre: "Hardware", region: "USA", desc: "Ushered in the HD era of gaming with robust online features.", impact: "84 Million Units Sold", cover: "https://placehold.co/600x350/EEEEEE/107C10?text=.", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Xbox_360_logo.svg/640px-Xbox_360_logo.svg.png" },
+            { year: 2006, title: "Wii", dev: "Nintendo", loc: "Kyoto, Japan", lat: 35.01, lon: 135.76, type: "Console", platform: "Console", genre: "Hardware", region: "Japan", desc: "Motion controls brought families and non-gamers in.", impact: "101 Million Units Sold", cover: "https://placehold.co/600x350/FFFFFF/DDDDDD?text=.", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bc/Wii_logo.svg/640px-Wii_logo.svg.png" },
+            { year: 2007, title: "iPhone App Store", dev: "Apple", loc: "Cupertino, CA", lat: 37.32, lon: -122.03, type: "Mobile", platform: "Mobile", genre: "Service", region: "USA", desc: "The birth of modern mobile gaming.", impact: "Created Mobile Gaming Market", cover: "https://placehold.co/600x350/222222/000000?text=.", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/App_Store_%28iOS%29.svg/640px-App_Store_%28iOS%29.svg.png" },
+            { year: 2009, title: "Minecraft", dev: "Mojang", loc: "Stockholm, Sweden", lat: 59.32, lon: 18.06, type: "PC/Indie", platform: "PC", genre: "Indie", region: "Europe", desc: "The creative sandbox phenomenon.", impact: "300 Million Copies Sold", cover: "https://placehold.co/600x350/335533/222222?text=.", logo: "https://placehold.co/400x150/transparent/FFFFFF?text=MINECRAFT" },
+            { year: 2009, title: "League of Legends", dev: "Riot", loc: "Los Angeles, CA", lat: 34.05, lon: -118.24, type: "MOBA", platform: "Online", genre: "MOBA", region: "USA", desc: "Solidified the Free-to-Play model and esports.", impact: "180M Monthly Players", cover: "https://placehold.co/600x350/001122/000000?text=.", logo: "https://placehold.co/400x200/transparent/DDBB00?text=LEAGUE+OF+LEGENDS" },
+            { year: 2010, title: "Kinect", dev: "Microsoft", loc: "Redmond, WA", lat: 47.67, lon: -122.12, type: "Hardware", platform: "Console", genre: "Hardware", region: "USA", desc: "The fastest-selling consumer electronics device at launch.", impact: "35 Million Units Sold", cover: "https://placehold.co/600x350/111111/5522AA?text=.", logo: "https://placehold.co/400x150/transparent/FFFFFF?text=KINECT" },
+            { year: 2011, title: "Dark Souls", dev: "FromSoftware", loc: "Tokyo, Japan", lat: 35.67, lon: 139.65, type: "Console", platform: "Console", genre: "RPG", region: "Japan", desc: "Spawned the 'Soulslike' genre known for difficulty.", impact: "Created Soulslike Genre", cover: "https://placehold.co/600x350/000000/111111?text=.", logo: "https://placehold.co/400x150/transparent/AAAAAA?text=DARK+SOULS" },
+            { year: 2013, title: "GTA V", dev: "Rockstar North", loc: "Edinburgh, Scotland", lat: 55.95, lon: -3.18, type: "Console", platform: "Console", genre: "Action", region: "Europe", desc: "The most profitable entertainment product ever.", impact: "$8 Billion+ Revenue", cover: "https://placehold.co/600x350/000000/224422?text=.", logo: "https://placehold.co/400x200/transparent/FFFFFF?text=GTA+V" },
+            { year: 2015, title: "The Witcher 3", dev: "CD Projekt Red", loc: "Warsaw, Poland", lat: 52.22, lon: 21.01, type: "RPG", platform: "PC", genre: "RPG", region: "Europe", desc: "Set a new bar for open-world storytelling.", impact: "50 Million Copies Sold", cover: "https://placehold.co/600x350/110000/330000?text=.", logo: "https://placehold.co/400x200/transparent/FF0000?text=THE+WITCHER+3" },
+            { year: 2017, title: "Fortnite", dev: "Epic Games", loc: "Cary, NC", lat: 35.79, lon: -78.78, type: "BR", platform: "Online", genre: "Shooter", region: "USA", desc: "Exploded the Battle Royale genre and cross-play.", impact: "400 Million Registered Users", cover: "https://placehold.co/600x350/441166/000000?text=.", logo: "https://placehold.co/400x150/transparent/FFFFFF?text=FORTNITE" },
+            { year: 2017, title: "Xbox Game Pass", dev: "Microsoft", loc: "Redmond, WA", lat: 47.67, lon: -122.12, type: "Service", platform: "Console", genre: "Service", region: "USA", desc: "The 'Netflix for games' subscription service that changed the industry model.", impact: "34 Million Subscribers", cover: "https://placehold.co/600x350/107C10/000000?text=.", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/01/Xbox_Game_Pass_logo.svg/640px-Xbox_Game_Pass_logo.svg.png" },
+            { year: 2017, title: "Nintendo Switch", dev: "Nintendo", loc: "Kyoto, Japan", lat: 35.01, lon: 135.76, type: "Hybrid", platform: "Console", genre: "Hardware", region: "Japan", desc: "Merged home and handheld markets.", impact: "139 Million Units Sold", cover: "https://placehold.co/600x350/E60012/FFFFFF?text=.", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/88/Nintendo_Switch_logo.svg/640px-Nintendo_Switch_logo.svg.png" },
+            { year: 2018, title: "Among Us", dev: "Innersloth", loc: "Redmond, WA", lat: 47.67, lon: -122.12, type: "Indie", platform: "Mobile", genre: "Social", region: "USA", desc: "Became a massive social phenomenon during the pandemic.", impact: "500M MAU (2020)", cover: "https://placehold.co/600x350/000000/FF0000?text=.", logo: "https://placehold.co/400x200/transparent/FFFFFF?text=AMONG+US" },
+            { year: 2020, title: "Xbox Series X|S", dev: "Microsoft", loc: "Redmond, WA", lat: 47.67, lon: -122.12, type: "Hardware", platform: "Console", genre: "Hardware", region: "USA", desc: "Microsoft's powerful next-gen consoles focusing on backward compatibility.", impact: "27 Million Units Sold (Est)", cover: "https://placehold.co/600x350/111111/107C10?text=.", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Xbox_one_logo.svg/1024px-Xbox_one_logo.svg.png" },
+            { year: 2020, title: "Genshin Impact", dev: "miHoYo", loc: "Shanghai, China", lat: 31.23, lon: 121.47, type: "Mobile/Gacha", platform: "Mobile", genre: "RPG", region: "China", desc: "Console-quality open world on mobile.", cover: "https://placehold.co/600x350/FFFFFF/333333?text=GENSHIN", logo: "https://placehold.co/400x150/transparent/000000?text=GENSHIN" },
+            { year: 2020, title: "Cyberpunk 2077", dev: "CDPR", loc: "Warsaw, Poland", lat: 52.22, lon: 21.01, type: "RPG", platform: "Console", genre: "RPG", region: "Europe", desc: "A massive, controversial launch that was later redeemed.", impact: "25 Million Copies Sold", cover: "https://placehold.co/600x350/FCEE0A/000000?text=.", logo: "https://placehold.co/400x150/transparent/000000?text=CYBERPUNK+2077" },
+            { year: 2022, title: "Elden Ring", dev: "FromSoftware", loc: "Tokyo, Japan", lat: 35.67, lon: 139.65, type: "RPG", platform: "Console", genre: "RPG", region: "Japan", desc: "Open world evolution of the Souls formula.", impact: "23 Million Copies Sold", cover: "https://placehold.co/600x350/111100/222200?text=.", logo: "https://placehold.co/400x150/transparent/DDAA00?text=ELDEN+RING" },
+            { year: 2022, title: "Steam Deck", dev: "Valve", loc: "Bellevue, WA", lat: 47.61, lon: -122.20, type: "Hardware", platform: "PC", genre: "Hardware", region: "USA", desc: "Brought PC gaming to a viable handheld form factor.", impact: "Estimated 3M+ Units", cover: "https://placehold.co/600x350/111111/FFFFFF?text=.", logo: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Steam_Deck_logo.svg/640px-Steam_Deck_logo.svg.png" },
+            { year: 2023, title: "Activision Acquisition", dev: "Microsoft", loc: "Redmond, WA", lat: 47.67, lon: -122.12, type: "Business", platform: "PC", genre: "Service", region: "USA", desc: "Microsoft acquires Activision Blizzard for $69B, adding CoD to its roster.", impact: "Largest Gaming Acquisition", cover: "https://placehold.co/600x350/000000/FFFFFF?text=.", logo: "https://placehold.co/400x150/transparent/FFFFFF?text=ACTIVISION+BLIZZARD" },
+            { year: 2025, title: "GTA VI (Anticipated)", dev: "Rockstar", loc: "New York, NY", lat: 40.71, lon: -74.00, type: "Future", platform: "Console", genre: "Action", region: "USA", desc: "The highly anticipated next chapter in the Grand Theft Auto series.", impact: "Most Viewed Trailer Ever", cover: "https://placehold.co/600x350/FF0099/330033?text=.", logo: "https://placehold.co/400x200/transparent/FFFFFF?text=GTA+VI" }
+        ];
+
+        // --- Logo Icons (Web Images) ---
+        const platformLogos = {
+            'arcade': 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0c/Arcade_Machine_Icon.svg/480px-Arcade_Machine_Icon.svg.png',
+            'atari': 'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b7/Atari_logo.svg/1200px-Atari_logo.svg.png',
+            'nintendo': 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/Nintendo.svg/600px-Nintendo.svg.png',
+            'sega': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/Sega_logo.svg/1200px-Sega_logo.svg.png',
+            'playstation': 'https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/PlayStation_logo.svg/800px-PlayStation_logo.svg.png',
+            'xbox': 'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Xbox_one_logo.svg/1024px-Xbox_one_logo.svg.png',
+            'pc': 'https://upload.wikimedia.org/wikipedia/commons/thumb/8/83/Steam_icon_logo.svg/800px-Steam_icon_logo.svg.png',
+            'mobile': 'https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/App_Store_%28iOS%29.svg/640px-App_Store_%28iOS%29.svg.png',
+            'magnavox': 'https://placehold.co/50/333/fff?text=M'
+        };
+
+        const eras = [
+            { name: "Arcade Age", start: 1970, end: 1982, icon: "🕹️" },
+            { name: "Home Console Boom", start: 1983, end: 1994, icon: "🏠" },
+            { name: "PC & Online", start: 1995, end: 2006, icon: "💻" },
+            { name: "Mobile Revolution", start: 2007, end: 2015, icon: "📱" },
+            { name: "Live Services", start: 2016, end: 2025, icon: "🌐" }
+        ];
+
+        // --- Helper Functions ---
+        const getStatsForYear = (y) => {
+            if (y < 1983) return { platform: "Arcade & Early PC", gfx: "Vector / 8-bit Mono", model: "Coins (Pay-to-Play)", players: "10M+" };
+            if (y < 1995) return { platform: "Home Consoles (NES/SNES)", gfx: "8-bit / 16-bit Sprites", model: "Physical Cartridges", players: "100M+" };
+            if (y < 2007) return { platform: "PC & 3D Consoles", gfx: "3D Polygons (Low Poly)", model: "CD / DVD / Subscriptions", players: "500M+" };
+            if (y < 2016) return { platform: "Mobile & HD Consoles", gfx: "HD / Retina / Shaders", model: "Digital Stores / DLC", players: "2B+" };
+            return { platform: "Cross-Platform / Cloud", gfx: "4K / Ray-Tracing", model: "Free-to-Play / Battle Pass", players: "3.5B+" };
+        };
+
+        const getLeaderboardData = (year) => {
+            if (year < 1977) return [{ name: "Arcade", key: 'arcade', share: 90, color: "#FF0055" }, { name: "Magnavox", key: 'magnavox', share: 10, color: "#AAAAAA" }];
+            if (year < 1983) return [{ name: "Arcade", key: 'arcade', share: 60, color: "#FF0055" }, { name: "Atari", key: 'atari', share: 30, color: "#E60012" }, { name: "PC", key: 'pc', share: 10, color: "#4488FF" }];
+            if (year < 1986) return [{ name: "Nintendo", key: 'nintendo', share: 45, color: "#E60012" }, { name: "PC", key: 'pc', share: 25, color: "#4488FF" }, { name: "Arcade", key: 'arcade', share: 30, color: "#FF0055" }];
+            if (year < 1991) return [{ name: "Nintendo", key: 'nintendo', share: 60, color: "#E60012" }, { name: "Sega", key: 'sega', share: 20, color: "#0055FF" }, { name: "PC", key: 'pc', share: 15, color: "#4488FF" }, { name: "Game Boy", key: 'nintendo', share: 5, color: "#9BBC0F" }];
+            if (year < 1995) return [{ name: "Nintendo", key: 'nintendo', share: 35, color: "#E60012" }, { name: "Sega", key: 'sega', share: 30, color: "#0055FF" }, { name: "Game Boy", key: 'nintendo', share: 25, color: "#9BBC0F" }, { name: "PC", key: 'pc', share: 10, color: "#4488FF" }];
+            if (year < 2000) return [{ name: "PlayStation", key: 'playstation', share: 50, color: "#888888" }, { name: "Nintendo", key: 'nintendo', share: 20, color: "#E60012" }, { name: "PC", key: 'pc', share: 20, color: "#4488FF" }, { name: "Game Boy", key: 'nintendo', share: 10, color: "#9BBC0F" }];
+            if (year < 2006) return [{ name: "PlayStation", key: 'playstation', share: 55, color: "#003399" }, { name: "Xbox", key: 'xbox', share: 15, color: "#107C10" }, { name: "GBA", key: 'nintendo', share: 15, color: "#9BBC0F" }, { name: "Nintendo", key: 'nintendo', share: 10, color: "#5522AA" }, { name: "PC", key: 'pc', share: 5, color: "#4488FF" }];
+            if (year < 2012) return [{ name: "Nintendo", key: 'nintendo', share: 30, color: "#FFFFFF" }, { name: "Xbox", key: 'xbox', share: 20, color: "#107C10" }, { name: "PlayStation", key: 'playstation', share: 15, color: "#003399" }, { name: "Mobile", key: 'mobile', share: 15, color: "#333333" }, { name: "DS/3DS", key: 'nintendo', share: 20, color: "#555555" }];
+            if (year < 2017) return [{ name: "Mobile", key: 'mobile', share: 45, color: "#333333" }, { name: "PlayStation", key: 'playstation', share: 20, color: "#003399" }, { name: "PC", key: 'pc', share: 20, color: "#4488FF" }, { name: "Xbox", key: 'xbox', share: 10, color: "#107C10" }, { name: "Nintendo", key: 'nintendo', share: 5, color: "#E60012" }];
+            return [{ name: "Mobile", key: 'mobile', share: 50, color: "#333333" }, { name: "PC", key: 'pc', share: 20, color: "#4488FF" }, { name: "Nintendo", key: 'nintendo', share: 15, color: "#E60012" }, { name: "PlayStation", key: 'playstation', share: 10, color: "#003399" }, { name: "Xbox", key: 'xbox', share: 5, color: "#107C10" }];
+        };
+
+        const getGamerCount = (year) => {
+            if(year < 1980) return 10 + (year-1970)*2; 
+            if(year < 1990) return 30 + (year-1980)*7; 
+            if(year < 2000) return 100 + (year-1990)*20; 
+            if(year < 2010) return 300 + (year-2000)*70; 
+            if(year < 2025) return 1000 + (year-2010)*160; 
+            return 3500;
+        }
+
+        const latLongToVector3 = (lat, lon, radius) => {
+            const phi = (90 - lat) * (Math.PI / 180);
+            const theta = (lon + 180) * (Math.PI / 180);
+            const x = -(radius * Math.sin(phi) * Math.cos(theta));
+            const z = radius * Math.sin(phi) * Math.sin(theta);
+            const y = radius * Math.cos(phi);
+            return new THREE.Vector3(x, y, z);
+        }
+
+        // --- React Components ---
+
+        const GamersGraph = ({ currentYear, minYear, maxYear }) => {
+            const dataPoints = useMemo(() => {
+                const points = [];
+                for(let y = minYear; y <= maxYear; y+=2) { 
+                    points.push({ year: y, count: getGamerCount(y) });
+                }
+                return points;
+            }, [minYear, maxYear]);
+
+            const maxCount = 3500;
+            const width = 240;
+            const height = 120;
+            const padding = 25;
+            const [hoveredPoint, setHoveredPoint] = useState(null);
+            const progressIndex = dataPoints.findIndex(p => p.year > currentYear);
+            const activePoints = progressIndex === -1 ? dataPoints : dataPoints.slice(0, progressIndex || 1);
+            const currentCount = getGamerCount(currentYear);
+            const getX = (year) => padding + ((year - minYear) / (maxYear - minYear)) * (width - 2*padding);
+            const getY = (count) => height - padding - (count / maxCount) * (height - 2*padding);
+            const pathD = activePoints.length > 1 ? `M ${activePoints.map(p => `${getX(p.year)},${getY(p.count)}`).join(' L ')}` : '';
+            const yTicks = [0, 1000, 2000, 3000];
+            const xTicks = [1970, 1980, 1990, 2000, 2010, 2020];
+
+            return (
+                <div className="w-full relative">
+                    <div className="text-right text-xs font-bold text-blue-400 mb-1">
+                        {currentCount > 1000 ? (currentCount/1000).toFixed(1) + 'B' : currentCount.toFixed(0) + 'M'} Players
+                    </div>
+                    <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} className="overflow-visible">
+                        {yTicks.map(tick => (
+                            <g key={tick}>
+                                <line x1={padding} y1={getY(tick)} x2={width-padding} y2={getY(tick)} stroke="#333" strokeWidth="1"/>
+                                <text x={padding-2} y={getY(tick)+3} textAnchor="end" fill="#555" fontSize="8">{tick >= 1000 ? tick/1000+'B' : tick}</text>
+                            </g>
+                        ))}
+                        {xTicks.map(tick => (
+                            <text key={tick} x={getX(tick)} y={height-5} textAnchor="middle" fill="#555" fontSize="8">{tick}</text>
+                        ))}
+                        {dataPoints.map((p, i) => (
+                            <rect key={i} x={getX(p.year) - 3} y={padding} width="6" height={height - 2*padding} fill="transparent" onMouseEnter={() => setHoveredPoint(p)} onMouseLeave={() => setHoveredPoint(null)} className="cursor-crosshair"/>
+                        ))}
+                        <path d={pathD} fill="none" stroke="#3b82f6" strokeWidth="2" />
+                        {activePoints.length > 0 && (
+                            <circle cx={getX(activePoints[activePoints.length-1].year)} cy={getY(activePoints[activePoints.length-1].count)} r="4" fill="#fff" className="animate-pulse"/>
+                        )}
+                        {hoveredPoint && (
+                            <g>
+                                <circle cx={getX(hoveredPoint.year)} cy={getY(hoveredPoint.count)} r="3" fill="#fbbf24" />
+                                <text x={width/2} y={10} textAnchor="middle" fill="#fbbf24" fontSize="10" fontWeight="bold">
+                                    {hoveredPoint.year}: {hoveredPoint.count > 1000 ? (hoveredPoint.count/1000).toFixed(1) + 'B' : hoveredPoint.count.toFixed(0) + 'M'}
+                                </text>
+                            </g>
+                        )}
+                    </svg>
+                </div>
+            );
+        };
+
+        const Globe = ({ currentYear, popupRef, selectedEvent, onMarkerClick, rotationSpeed, autoFocus, visibleEvents, markerScale, showStars, showClouds, atmosphereIntensity, constellations, theme }) => {
+            const mountRef = useRef(null);
+            const markersRef = useRef([]);
+            const linesRef = useRef(null);
+            const globeRef = useRef(null);
+            const controlsRef = useRef(null);
+            const cameraRef = useRef(null);
+            const cloudRef = useRef(null);
+            const starsRef = useRef(null);
+            const atmosphereRef = useRef(null);
+            const targetCameraPosRef = useRef(null);
+            const raycaster = useRef(new THREE.Raycaster());
+            const mouse = useRef(new THREE.Vector2());
+            const particlesRef = useRef(null); 
+            
+            const selectedEventRef = useRef(selectedEvent);
+            const autoFocusRef = useRef(autoFocus);
+            const visibleEventsRef = useRef(visibleEvents);
+            const markerScaleRef = useRef(markerScale);
+
+            useEffect(() => { selectedEventRef.current = selectedEvent; }, [selectedEvent]);
+            useEffect(() => { autoFocusRef.current = autoFocus; }, [autoFocus]);
+            useEffect(() => { visibleEventsRef.current = visibleEvents; }, [visibleEvents]);
+            useEffect(() => { markerScaleRef.current = markerScale; }, [markerScale]);
+
+            useEffect(() => {
+                if (globeRef.current && theme) {
+                    const sphere = globeRef.current.children.find(c => c.geometry.type === 'SphereGeometry');
+                    if (sphere) {
+                        if (theme === 'hologram') {
+                            sphere.material.wireframe = true;
+                            sphere.material.color.setHex(0x0088ff);
+                            sphere.material.emissive.setHex(0x001133);
+                            sphere.material.map = null;
+                        } else if (theme === 'matrix') {
+                            sphere.material.wireframe = true;
+                            sphere.material.color.setHex(0x00ff00);
+                            sphere.material.emissive.setHex(0x003300);
+                            sphere.material.map = null;
+                        } else {
+                            sphere.material.wireframe = false;
+                            sphere.material.color.setHex(0x333333);
+                            sphere.material.emissive.setHex(0x000000);
+                        }
+                    }
+                }
+            }, [theme]);
+
+            useEffect(() => {
+                if (selectedEvent && particlesRef.current) {
+                    const pGeo = particlesRef.current.geometry;
+                    const count = pGeo.attributes.position.count;
+                    const positions = pGeo.attributes.position.array;
+                    const center = latLongToVector3(selectedEvent.lat, selectedEvent.lon, 10);
+                    
+                    for(let i=0; i<count; i++) {
+                        positions[i*3] = center.x;
+                        positions[i*3+1] = center.y;
+                        positions[i*3+2] = center.z;
+                        pGeo.userData.velocities[i] = new THREE.Vector3(
+                            (Math.random() - 0.5),
+                            (Math.random() - 0.5),
+                            (Math.random() - 0.5)
+                        ).normalize().multiplyScalar(0.2 + Math.random() * 0.3);
+                    }
+                    pGeo.userData.active = true;
+                    pGeo.userData.time = 0;
+                    pGeo.attributes.position.needsUpdate = true;
+                }
+            }, [selectedEvent]);
+
+            useEffect(() => {
+                if(atmosphereRef.current) {
+                    atmosphereRef.current.material.opacity = atmosphereIntensity * 0.15;
+                }
+            }, [atmosphereIntensity]);
+
+            useEffect(() => {
+                if(cloudRef.current) cloudRef.current.visible = showClouds && theme === 'realistic';
+                if(starsRef.current) starsRef.current.visible = showStars;
+            }, [showClouds, showStars, theme]);
+
+            useEffect(() => {
+                if (autoFocus && selectedEvent && cameraRef.current) {
+                    const radius = 24; 
+                    const vec = latLongToVector3(selectedEvent.lat, selectedEvent.lon, radius);
+                    targetCameraPosRef.current = vec;
+                } else {
+                    targetCameraPosRef.current = null;
+                }
+            }, [selectedEvent, autoFocus]);
+
+            useEffect(() => {
+                const mount = mountRef.current;
+                const scene = new THREE.Scene();
+                
+                const starGeo = new THREE.BufferGeometry();
+                const starCount = 4000;
+                const starPos = new Float32Array(starCount * 3);
+                for(let i=0; i<starCount; i++) {
+                    starPos[i*3] = (Math.random() - 0.5) * 800;
+                    starPos[i*3+1] = (Math.random() - 0.5) * 800;
+                    starPos[i*3+2] = (Math.random() - 0.5) * 800;
+                }
+                starGeo.setAttribute('position', new THREE.BufferAttribute(starPos, 3));
+                const starMat = new THREE.PointsMaterial({color: 0xcccccc, size: 0.2, transparent: true, opacity: 0.8});
+                const stars = new THREE.Points(starGeo, starMat);
+                starsRef.current = stars;
+                scene.add(stars);
+
+                const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+                camera.position.z = window.innerWidth < 768 ? 45 : 35; 
+                camera.position.y = 12;
+                cameraRef.current = camera;
+
+                const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                renderer.setSize(window.innerWidth, window.innerHeight);
+                renderer.setPixelRatio(window.devicePixelRatio);
+                mount.appendChild(renderer.domElement);
+
+                const controls = new THREE.OrbitControls(camera, renderer.domElement);
+                controls.enableDamping = true;
+                controls.dampingFactor = 0.05;
+                controls.minDistance = 18;
+                controls.maxDistance = 80;
+                controls.autoRotate = true;
+                controlsRef.current = controls;
+
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
+                scene.add(ambientLight);
+                const sunLight = new THREE.DirectionalLight(0xffffff, 1.2);
+                sunLight.position.set(50, 30, 50);
+                scene.add(sunLight);
+                const backLight = new THREE.DirectionalLight(0x4466aa, 0.5);
+                backLight.position.set(-50, 20, -50);
+                scene.add(backLight);
+
+                const globeGroup = new THREE.Group();
+                scene.add(globeGroup);
+                globeRef.current = globeGroup;
+
+                const textureLoader = new THREE.TextureLoader();
+                const earthMap = textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_atmos_2048.jpg');
+                const earthNormal = textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_normal_2048.jpg');
+                const earthSpecular = textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_specular_2048.jpg');
+                const cloudMap = textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_clouds_1024.png');
+
+                const geometry = new THREE.SphereGeometry(10, 64, 64);
+                const material = new THREE.MeshPhongMaterial({
+                    map: earthMap,
+                    normalMap: earthNormal,
+                    specularMap: earthSpecular,
+                    specular: new THREE.Color(0x333333),
+                    shininess: 5
+                });
+                const sphere = new THREE.Mesh(geometry, material);
+                globeGroup.add(sphere);
+
+                const cloudGeo = new THREE.SphereGeometry(10.15, 64, 64);
+                const cloudMat = new THREE.MeshPhongMaterial({
+                    map: cloudMap,
+                    transparent: true,
+                    opacity: 0.8,
+                    side: THREE.DoubleSide,
+                    depthWrite: false,
+                });
+                const clouds = new THREE.Mesh(cloudGeo, cloudMat);
+                cloudRef.current = clouds;
+                globeGroup.add(clouds);
+
+                const atmosphereGeo = new THREE.SphereGeometry(10.25, 64, 64);
+                const atmosphereMat = new THREE.MeshPhongMaterial({
+                    color: 0x44aaff,
+                    transparent: true,
+                    opacity: 0.15,
+                    side: THREE.DoubleSide,
+                    blending: THREE.AdditiveBlending,
+                    depthWrite: false
+                });
+                const atmosphere = new THREE.Mesh(atmosphereGeo, atmosphereMat);
+                atmosphereRef.current = atmosphere;
+                globeGroup.add(atmosphere);
+
+                const markerGroup = new THREE.Group();
+                globeGroup.add(markerGroup);
+                markersRef.current = markerGroup;
+
+                const linesGroup = new THREE.Group();
+                globeGroup.add(linesGroup);
+                linesRef.current = linesGroup;
+
+                const particleCount = 100;
+                const pGeo = new THREE.BufferGeometry();
+                const pPos = new Float32Array(particleCount * 3);
+                pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
+                pGeo.userData = { velocities: [], active: false, time: 0 };
+                
+                const pMat = new THREE.PointsMaterial({
+                    color: 0xffff00,
+                    size: 0.5,
+                    transparent: true,
+                    opacity: 0
+                });
+                const particleSystem = new THREE.Points(pGeo, pMat);
+                particlesRef.current = particleSystem;
+                scene.add(particleSystem);
+
+                const onCanvasClick = (event) => {
+                    const rect = renderer.domElement.getBoundingClientRect();
+                    mouse.current.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+                    mouse.current.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+
+                    raycaster.current.setFromCamera(mouse.current, camera);
+                    const intersects = raycaster.current.intersectObjects(markerGroup.children, true);
+
+                    if (intersects.length > 0) {
+                        const hit = intersects.find(i => i.object.userData && i.object.userData.data);
+                        if (hit) {
+                            onMarkerClick(hit.object.userData.data);
+                        }
+                    }
+                };
+
+                const onPointerDown = () => {
+                    targetCameraPosRef.current = null;
+                };
+
+                renderer.domElement.addEventListener('click', onCanvasClick);
+                renderer.domElement.addEventListener('pointerdown', onPointerDown);
+                renderer.domElement.addEventListener('touchstart', onPointerDown, {passive: true});
+
+                const tempV = new THREE.Vector3();
+                const animate = () => {
+                    requestAnimationFrame(animate);
+                    
+                    if (cloudRef.current && cloudRef.current.visible) {
+                        cloudRef.current.rotation.y += 0.0003;
+                    }
+
+                    if (targetCameraPosRef.current) {
+                        camera.position.lerp(targetCameraPosRef.current, 0.04);
+                        controls.target.set(0,0,0);
+                        controls.autoRotate = false;
+                    }
+
+                    if (particlesRef.current && particlesRef.current.geometry.userData.active) {
+                        const pGeo = particlesRef.current.geometry;
+                        const positions = pGeo.attributes.position.array;
+                        const velocities = pGeo.userData.velocities;
+                        
+                        pGeo.userData.time += 0.002; // SLOWER PARTICLES (0.002 instead of 0.005)
+                        particlesRef.current.material.opacity = 1 - pGeo.userData.time;
+
+                        if (pGeo.userData.time >= 1) {
+                            pGeo.userData.active = false;
+                            particlesRef.current.material.opacity = 0;
+                        } else {
+                            for(let i=0; i<pGeo.attributes.position.count; i++) {
+                                positions[i*3] += velocities[i].x;
+                                positions[i*3+1] += velocities[i].y;
+                                positions[i*3+2] += velocities[i].z;
+                            }
+                            pGeo.attributes.position.needsUpdate = true;
+                        }
+                    }
+
+                    controls.update();
+                    
+                    const currentSelectedEvent = selectedEventRef.current;
+                    const baseScale = markerScaleRef.current || 1;
+
+                    let activeMarker = null;
+                    markerGroup.children.forEach(marker => {
+                         if (currentSelectedEvent && marker.userData.data && marker.userData.data.title === currentSelectedEvent.title) {
+                             activeMarker = marker;
+                         }
+
+                         if (marker.userData.active || marker === activeMarker) {
+                             const time = Date.now() * 0.002;
+                             const scale = (1 + Math.sin(time * 3 + marker.userData.offset) * 0.2) * baseScale;
+                             marker.scale.set(1, scale, 1);
+                         } else {
+                             marker.scale.set(1, baseScale, 1);
+                         }
+                    });
+
+                    if (activeMarker && popupRef.current) {
+                        activeMarker.getWorldPosition(tempV);
+                        tempV.project(camera);
+                        const x = (tempV.x * .5 + .5) * window.innerWidth;
+                        const y = (-(tempV.y * .5) + .5) * window.innerHeight;
+
+                        if (Math.abs(tempV.z) < 1) {
+                            const worldPos = new THREE.Vector3();
+                            activeMarker.getWorldPosition(worldPos);
+                            const normal = worldPos.clone().normalize();
+                            const viewDir = camera.position.clone().sub(worldPos).normalize();
+                            const dot = normal.dot(viewDir);
+                            
+                            if (dot > 0.15) {
+                                popupRef.current.style.transform = `translate(${x}px, ${y}px)`;
+                                popupRef.current.style.opacity = "1";
+                            } else {
+                                popupRef.current.style.opacity = "0";
+                            }
+                        }
+                    } else if (popupRef.current) {
+                        popupRef.current.style.opacity = "0";
+                    }
+
+                    renderer.render(scene, camera);
+                };
+                animate();
+
+                const handleResize = () => {
+                    camera.aspect = window.innerWidth / window.innerHeight;
+                    camera.updateProjectionMatrix();
+                    renderer.setSize(window.innerWidth, window.innerHeight);
+                    
+                    if (window.innerWidth < 768) {
+                        camera.position.z = 45;
+                    } else {
+                        camera.position.z = 35;
+                    }
+                };
+                window.addEventListener('resize', handleResize);
+
+                return () => {
+                    window.removeEventListener('resize', handleResize);
+                    renderer.domElement.removeEventListener('click', onCanvasClick);
+                    renderer.domElement.removeEventListener('pointerdown', onPointerDown);
+                    mount.removeChild(renderer.domElement);
+                };
+            }, []);
+
+            useEffect(() => {
+                if (controlsRef.current) {
+                    controlsRef.current.autoRotate = rotationSpeed > 0 && !targetCameraPosRef.current;
+                    controlsRef.current.autoRotateSpeed = rotationSpeed;
+                }
+            }, [rotationSpeed]);
+
+            useEffect(() => {
+                if (!markersRef.current) return;
+                while(markersRef.current.children.length > 0){ 
+                    markersRef.current.remove(markersRef.current.children[0]); 
+                }
+
+                visibleEvents.forEach(m => {
+                    const isSelected = selectedEvent && m.title === selectedEvent.title;
+                    const isNew = m.year === currentYear;
+                    
+                    let color = 0xffffff;
+                    if (isSelected) color = 0x00ffff;
+                    else if (isNew) color = 0xff3366;
+
+                    const height = (isSelected || isNew) ? 6 : 1.2; 
+                    const radius = (isSelected || isNew) ? 0.35 : 0.18;
+
+                    const pinGeo = new THREE.CylinderGeometry(radius, 0.05, height, 8);
+                    pinGeo.translate(0, height / 2, 0);
+                    pinGeo.rotateX(Math.PI / 2);
+                    
+                    const pinMat = new THREE.MeshBasicMaterial({ color: color });
+                    const pin = new THREE.Mesh(pinGeo, pinMat);
+
+                    const pos = latLongToVector3(m.lat, m.lon, 10);
+                    pin.position.copy(pos);
+                    pin.lookAt(new THREE.Vector3(0,0,0));
+                    
+                    pin.userData = { offset: Math.random() * 100, active: isNew || isSelected, data: m };
+                    
+                    markersRef.current.add(pin);
+                });
+
+            }, [visibleEvents, selectedEvent, currentYear]);
+
+            // Constellation Effect
+            useEffect(() => {
+                if (!linesRef.current) return;
+                while(linesRef.current.children.length > 0) linesRef.current.remove(linesRef.current.children[0]);
+
+                if (constellations && selectedEvent) {
+                    const related = visibleEvents.filter(e => e.genre === selectedEvent.genre && e !== selectedEvent);
+                    if (related.length === 0) return;
+
+                    const startPos = latLongToVector3(selectedEvent.lat, selectedEvent.lon, 10);
+                    
+                    related.forEach(rel => {
+                        const endPos = latLongToVector3(rel.lat, rel.lon, 10);
+                        const curve = new THREE.QuadraticBezierCurve3(
+                            startPos,
+                            startPos.clone().add(endPos).multiplyScalar(0.5).normalize().multiplyScalar(15), 
+                            endPos
+                        );
+                        
+                        const points = curve.getPoints(50);
+                        const geometry = new THREE.BufferGeometry().setFromPoints(points);
+                        const material = new THREE.LineBasicMaterial({ color: 0x00ffff, transparent: true, opacity: 0.4 });
+                        const line = new THREE.Line(geometry, material);
+                        linesRef.current.add(line);
+                    });
+                }
+            }, [constellations, selectedEvent, visibleEvents]);
+
+            return <div ref={mountRef} id="canvas-container" />;
+        };
+
+        const CollapsiblePanel = ({ title, icon, children, isOpen, onToggle, side="left" }) => {
+            const borderClass = side === "left" ? "border-l-4" : "border-r-4";
+            
+            return (
+                <div className={`glass-panel rounded-xl shadow-xl ${borderClass} border-blue-600 w-64 md:w-72 overflow-hidden mb-2 pointer-events-auto hidden sm:block`}>
+                    <div 
+                        className="flex justify-between items-center p-3 cursor-pointer hover:bg-white/5 transition-colors"
+                        onClick={onToggle}
+                    >
+                        <h3 className="text-xs font-bold text-gray-300 uppercase tracking-widest flex items-center gap-2">
+                            {icon} {title}
+                        </h3>
+                        <div className={`transform transition-transform duration-300 text-gray-400 ${isOpen ? 'rotate-180' : ''}`}>
+                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                        </div>
+                    </div>
+                    
+                    <div className={`collapsible-container ${isOpen ? 'expanded' : 'collapsed'}`}>
+                        <div className="p-4 pt-0">
+                            {children}
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // --- Icons (Functional Components) ---
+        const PlayIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>;
+        const PauseIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>;
+        const SearchIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>;
+        const SettingsIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>;
+        const FilterIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>;
+        const GamepadIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="6" y1="12" x2="10" y2="12"></line><line x1="8" y1="10" x2="8" y2="14"></line><line x1="15" y1="13" x2="15.01" y2="13"></line><line x1="18" y1="11" x2="18.01" y2="11"></line><rect x="2" y="6" width="20" height="12" rx="2"></rect></svg>;
+        const MonitorIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>;
+        const DollarIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>;
+        const UserIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>;
+        const ExternalLinkIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>;
+        const TrophyIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 21h8v-2l1-1v-4h-10v4l1 1v2z"></path><path d="M12 2a6 6 0 0 1 6 6v7h-12v-7a6 6 0 0 1 6-6z"></path><path d="M18 11h2a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-2"></path><path d="M6 11h-2a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2h2"></path></svg>;
+        const ChartIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>;
+        const DiceIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="9" cy="9" r="1"></circle><circle cx="15" cy="15" r="1"></circle></svg>;
+        const CloseIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>;
+        const ChevronDownIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>;
+
+        // --- Main UI Application ---
+        const App = () => {
+            const minYear = 1970;
+            const maxYear = 2025; 
+            
+            const [year, setYear] = useState(minYear);
+            const [isPlaying, setIsPlaying] = useState(false);
+            const [searchQuery, setSearchQuery] = useState("");
+            const [showSearch, setShowSearch] = useState(false);
+            
+            const [selectedEvent, setSelectedEvent] = useState(null);
+            const [rotationSpeed, setRotationSpeed] = useState(0.5);
+            const [playbackSpeed, setPlaybackSpeed] = useState(1200);
+            const [autoFocus, setAutoFocus] = useState(false); 
+            const [showSettings, setShowSettings] = useState(false);
+            const [showFilters, setShowFilters] = useState(false);
+            
+            const [markerScale, setMarkerScale] = useState(1);
+            const [showStars, setShowStars] = useState(true);
+            const [showClouds, setShowClouds] = useState(true);
+            const [atmosphereIntensity, setAtmosphereIntensity] = useState(1);
+            const [retroMode, setRetroMode] = useState(false);
+            const [constellations, setConstellations] = useState(false);
+            const [theme, setTheme] = useState('realistic');
+
+            const [isStatsOpen, setIsStatsOpen] = useState(true);
+            const [isGraphOpen, setIsGraphOpen] = useState(true);
+            const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(true);
+            
+            const [mobileTab, setMobileTab] = useState(null); 
+
+            useEffect(() => {
+                if (window.innerWidth > 768) {
+                    setIsStatsOpen(true);
+                    setIsGraphOpen(true);
+                    setIsLeaderboardOpen(true);
+                }
+            }, []);
+
+            const [activeFilters, setActiveFilters] = useState({
+                platform: "All",
+                genre: "All",
+                region: "All"
+            });
+            
+            const popupRef = useRef(null);
+
+            useEffect(() => {
+                const handleKeyDown = (e) => {
+                    if (e.target.tagName === 'INPUT') return; 
+                    switch(e.key) {
+                        case ' ':
+                            e.preventDefault();
+                            setIsPlaying(prev => !prev);
+                            break;
+                        case 'ArrowLeft':
+                            setYear(prev => Math.max(minYear, prev - 1));
+                            setIsPlaying(false);
+                            break;
+                        case 'ArrowRight':
+                            setYear(prev => Math.min(maxYear, prev + 1));
+                            setIsPlaying(false);
+                            break;
+                        case 'f':
+                        case 'F':
+                            setAutoFocus(prev => !prev);
+                            break;
+                    }
+                };
+                window.addEventListener('keydown', handleKeyDown);
+                return () => window.removeEventListener('keydown', handleKeyDown);
+            }, []);
+
+            useEffect(() => {
+                let interval;
+                if (isPlaying) {
+                    interval = setInterval(() => {
+                        setYear(prev => {
+                            if (prev >= maxYear) {
+                                setIsPlaying(false);
+                                return maxYear;
+                            }
+                            return prev + 1;
+                        });
+                    }, playbackSpeed);
+                }
+                return () => clearInterval(interval);
+            }, [isPlaying, playbackSpeed]);
+
+            const visibleEvents = useMemo(() => {
+                return milestones.filter(m => {
+                    if (m.year > year) return false;
+                    if (activeFilters.platform !== "All" && m.platform !== activeFilters.platform) return false;
+                    if (activeFilters.genre !== "All" && m.genre !== activeFilters.genre) return false;
+                    if (activeFilters.region !== "All" && m.region !== activeFilters.region) return false;
+                    return true;
+                });
+            }, [year, activeFilters]);
+
+            useEffect(() => {
+                if (isPlaying) {
+                     const eventsThisYear = visibleEvents.filter(m => m.year === year);
+                     if (eventsThisYear.length > 0) {
+                         setSelectedEvent(eventsThisYear[eventsThisYear.length - 1]);
+                     }
+                }
+            }, [year, isPlaying, visibleEvents]);
+
+            const filteredSearch = useMemo(() => {
+                if (!searchQuery) return [];
+                return milestones.filter(m => 
+                    m.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    m.dev.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                    m.loc.toLowerCase().includes(searchQuery.toLowerCase())
+                );
+            }, [searchQuery]);
+
+            const handleSearchSelect = (selectedYear) => {
+                setYear(selectedYear);
+                setSearchQuery("");
+                setShowSearch(false);
+                setIsPlaying(false);
+                const evt = milestones.find(m => m.year === selectedYear);
+                if(evt) setSelectedEvent(evt);
+            };
+            
+            const handleMarkerClick = (data) => {
+                setSelectedEvent(data);
+                setIsPlaying(false);
+            };
+
+            const togglePlay = () => {
+                if (year >= maxYear) setYear(minYear);
+                setIsPlaying(!isPlaying);
+            };
+
+            const jumpToEra = (eraStart) => {
+                setYear(eraStart);
+                setIsPlaying(false);
+                const evt = milestones.find(m => m.year >= eraStart);
+                if(evt) setSelectedEvent(evt);
+            }
+
+            const jumpToRandom = () => {
+                const randomEvent = milestones[Math.floor(Math.random() * milestones.length)];
+                setYear(randomEvent.year);
+                setSelectedEvent(randomEvent);
+                setIsPlaying(false);
+            }
+
+            const currentStats = getStatsForYear(year);
+            const leaderboard = getLeaderboardData(year);
+
+            // Mobile Content Renderer
+            const renderMobileContent = () => {
+                switch(mobileTab) {
+                    case 'stats':
+                        return (
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-center border-b border-white/20 pb-2 mb-2">
+                                    <h3 className="text-sm font-bold text-blue-300 uppercase flex items-center gap-2"><TrophyIcon/> Industry Status ({year})</h3>
+                                    <button onClick={() => setMobileTab(null)} className="p-2 bg-white/10 rounded-full"><CloseIcon size={20}/></button>
+                                </div>
+                                <div className="stats-item flex items-center gap-3">
+                                    <div className="p-2 bg-blue-900/30 rounded-lg text-blue-400"><GamepadIcon size={16}/></div>
+                                    <div><div className="text-[10px] text-gray-400 uppercase">Platform</div><div className="text-xs font-bold text-white">{currentStats.platform}</div></div>
+                                </div>
+                                <div className="stats-item flex items-center gap-3">
+                                    <div className="p-2 bg-green-900/30 rounded-lg text-green-400"><DollarIcon size={16}/></div>
+                                    <div><div className="text-[10px] text-gray-400 uppercase">Model</div><div className="text-xs font-bold text-white">{currentStats.model}</div></div>
+                                </div>
+                                <div className="stats-item flex items-center gap-3">
+                                    <div className="p-2 bg-orange-900/30 rounded-lg text-orange-400"><UserIcon size={16}/></div>
+                                    <div><div className="text-[10px] text-gray-400 uppercase">Players</div><div className="text-xs font-bold text-white">{currentStats.players}</div></div>
+                                </div>
+                            </div>
+                        );
+                    case 'leaderboard':
+                        return (
+                            <div className="space-y-3">
+                                <div className="flex justify-between items-center border-b border-white/20 pb-2 mb-2">
+                                    <h3 className="text-sm font-bold text-blue-300 uppercase flex items-center gap-2"><ChartIcon/> Market Share ({year})</h3>
+                                    <button onClick={() => setMobileTab(null)} className="p-2 bg-white/10 rounded-full"><CloseIcon size={20}/></button>
+                                </div>
+                                {leaderboard.sort((a,b) => b.share - a.share).map((item, index) => (
+                                    <div key={item.name} className="relative">
+                                        <div className="flex justify-between items-end mb-1">
+                                            <div className="flex items-center gap-2">
+                                                <div className="w-6 h-6 flex items-center justify-center bg-white/10 rounded p-1"><img src={platformLogos[item.key]} alt={item.name} className="w-full h-full object-contain" /></div>
+                                                <span className="text-xs font-bold text-white">{item.name}</span>
+                                            </div>
+                                            <span className="text-[10px] text-gray-400 font-mono">{item.share}%</span>
+                                        </div>
+                                        <div className="w-full h-1 bg-gray-800 rounded-full overflow-hidden"><div className="h-full rounded-full bar-fill" style={{width: `${item.share}%`, backgroundColor: item.color}}></div></div>
+                                    </div>
+                                ))}
+                            </div>
+                        );
+                    case 'graph':
+                        return (
+                            <div className="space-y-2">
+                                <div className="flex justify-between items-center border-b border-white/20 pb-2 mb-2">
+                                    <h3 className="text-sm font-bold text-blue-300 uppercase flex items-center gap-2"><DollarIcon/> Player Growth</h3>
+                                    <button onClick={() => setMobileTab(null)} className="p-2 bg-white/10 rounded-full"><CloseIcon size={20}/></button>
+                                </div>
+                                <GamersGraph currentYear={year} minYear={minYear} maxYear={maxYear} />
+                            </div>
+                        );
+                    default: return null;
+                }
+            };
+
+            return (
+                <div className="relative w-full h-full text-white font-sans overflow-hidden">
+                    
+                    {retroMode && <div className="scanlines"></div>}
+                    
+                    {/* Modal Backdrop for Mobile */}
+                    {(mobileTab || (showSearch && window.innerWidth < 640) || (showFilters && window.innerWidth < 640) || (showSettings && window.innerWidth < 640)) && 
+                        <div className="fixed inset-0 z-40 modal-backdrop transition-opacity" onClick={() => { setMobileTab(null); setShowSearch(false); setShowFilters(false); setShowSettings(false); }}></div>
+                    }
+
+                    <Globe 
+                        currentYear={year} 
+                        popupRef={popupRef} 
+                        selectedEvent={selectedEvent}
+                        onMarkerClick={handleMarkerClick}
+                        rotationSpeed={rotationSpeed}
+                        autoFocus={autoFocus}
+                        visibleEvents={visibleEvents}
+                        markerScale={markerScale}
+                        showStars={showStars}
+                        showClouds={showClouds}
+                        atmosphereIntensity={atmosphereIntensity}
+                        constellations={constellations}
+                        theme={theme}
+                    />
+
+                    {/* --- TOP UI --- */}
+                    <div className="absolute top-0 left-0 w-full z-20 pointer-events-none flex flex-col gap-2 p-4 pt-10 sm:pt-4">
+                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                            <div className="glass-panel px-4 py-2 rounded-lg pointer-events-auto border-l-2 border-blue-500">
+                                <h1 className="text-xl font-bold tracking-widest text-white">GAME_HISTORY_GLOBE</h1>
+                                <div className="text-xs text-blue-400 font-mono">EARTH SIMULATION // {year}</div>
+                            </div>
+
+                            <div className="flex gap-2 pointer-events-auto">
+                                <button onClick={jumpToRandom} title="Random Event" className="glass-panel p-3 rounded-full hover:bg-white/10 transition-colors"><DiceIcon /></button>
+                                <button onClick={() => setShowFilters(!showFilters)} title="Filters" className={`glass-panel p-3 rounded-full hover:bg-white/10 transition-colors ${showFilters ? 'bg-white/20' : ''}`}><FilterIcon /></button>
+                                <button onClick={() => setShowSettings(!showSettings)} title="Settings" className={`glass-panel p-3 rounded-full hover:bg-white/10 transition-colors ${showSettings ? 'bg-white/20' : ''}`}><SettingsIcon /></button>
+                                <button onClick={() => setShowSearch(!showSearch)} title="Search" className="glass-panel p-3 rounded-full hover:bg-white/10 transition-colors"><SearchIcon /></button>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-1 justify-start sm:justify-center pointer-events-auto overflow-x-auto pb-2 no-scrollbar">
+                            {eras.map(era => (
+                                <button 
+                                    key={era.name}
+                                    onClick={() => jumpToEra(era.start)}
+                                    className={`glass-panel px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${year >= era.start && year <= era.end ? 'bg-blue-600/50 border-blue-400 text-white' : 'border-transparent text-gray-400 hover:text-white'}`}
+                                >
+                                    {era.icon} {era.name}
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+
+                    {/* --- DROPDOWN MENUS --- */}
+                    <div className="absolute top-20 right-4 z-50 flex flex-col items-end pointer-events-auto gap-2">
+                        {showSearch && (
+                            <div className={`glass-panel p-4 animate-card z-50 ${window.innerWidth < 640 ? 'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-11/12 rounded-xl' : 'absolute top-0 right-0 w-72 rounded-lg'}`}>
+                                <div className="flex justify-between items-center mb-2">
+                                    <span className="text-xs text-gray-400">Search</span>
+                                    <button onClick={() => setShowSearch(false)}><CloseIcon size={16}/></button>
+                                </div>
+                                <input type="text" placeholder="Find game..." className="w-full bg-black/50 border border-white/20 rounded p-2 text-sm text-white focus:outline-none focus:border-blue-500" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} autoFocus />
+                                <div className="max-h-60 overflow-y-auto mt-2 space-y-1 custom-scrollbar">
+                                    {filteredSearch.map((m, idx) => (
+                                        <div key={idx} onClick={() => { handleSearchSelect(m.year); setShowSearch(false); }} className="p-2 hover:bg-white/10 rounded cursor-pointer text-sm flex justify-between">
+                                            <span>{m.title}</span><span className="text-gray-400 text-xs">{m.year}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+
+                        {showFilters && (
+                            <div className={`glass-panel p-4 animate-card z-50 space-y-4 ${window.innerWidth < 640 ? 'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-11/12 rounded-xl' : 'absolute top-0 right-0 w-64 rounded-lg'}`}>
+                                <div className="flex justify-between items-center">
+                                    <h3 className="text-xs font-bold text-blue-300 uppercase flex items-center gap-2"><FilterIcon size={12}/> Filters</h3>
+                                    <button onClick={() => setShowFilters(false)}><CloseIcon size={16}/></button>
+                                </div>
+                                <div>
+                                    <div className="text-xs text-gray-400 mb-1 flex items-center gap-1"><GamepadIcon/> Platform</div>
+                                    <select className="w-full bg-black/50 border border-white/20 rounded p-1 text-xs" value={activeFilters.platform} onChange={(e) => setActiveFilters({...activeFilters, platform: e.target.value})}>
+                                        <option value="All">All Platforms</option><option value="Arcade">Arcade</option><option value="Console">Console</option><option value="PC">PC</option><option value="Mobile">Mobile</option><option value="Online">Online</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <div className="text-xs text-gray-400 mb-1 flex items-center gap-1">🌍 Region</div>
+                                    <select className="w-full bg-black/50 border border-white/20 rounded p-1 text-xs" value={activeFilters.region} onChange={(e) => setActiveFilters({...activeFilters, region: e.target.value})}>
+                                        <option value="All">Global</option><option value="Japan">Japan</option><option value="USA">USA</option><option value="Europe">Europe</option><option value="China">China</option>
+                                    </select>
+                                </div>
+                            </div>
+                        )}
+
+                        {showSettings && (
+                            <div className={`glass-panel p-4 animate-card z-50 flex flex-col gap-4 custom-scrollbar ${window.innerWidth < 640 ? 'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-11/12 max-h-[80vh] overflow-y-auto rounded-xl' : 'absolute top-0 right-0 w-72 max-h-[70vh] rounded-lg overflow-y-auto'}`}>
+                                <div className="flex justify-between items-center">
+                                    <span className="text-xs text-gray-400">Settings</span>
+                                    <button onClick={() => setShowSettings(false)}><CloseIcon size={16}/></button>
+                                </div>
+                                <div>
+                                    <div className="text-xs text-blue-300 font-bold mb-2 uppercase">Theme</div>
+                                    <div className="flex gap-2">
+                                        {['realistic', 'hologram', 'matrix'].map(t => (
+                                            <button key={t} onClick={() => setTheme(t)} className={`flex-1 text-[10px] py-1 rounded border capitalize ${theme === t ? 'bg-blue-600 border-blue-400' : 'border-gray-600 hover:bg-white/10'}`}>{t}</button>
+                                        ))}
+                                    </div>
+                                </div>
+                                {[
+                                    { label: "Earth Rotation", val: rotationSpeed, set: setRotationSpeed, min: 0, max: 2, step: 0.1 },
+                                    { label: "Timeline Speed", val: 3000 - playbackSpeed, set: (v) => setPlaybackSpeed(3000 - v), min: 200, max: 2500, step: 100 },
+                                    { label: "Marker Size", val: markerScale, set: setMarkerScale, min: 0.5, max: 2, step: 0.1 },
+                                    { label: "Atmosphere", val: atmosphereIntensity, set: setAtmosphereIntensity, min: 0, max: 3, step: 0.1 }
+                                ].map((s, i) => (
+                                    <div key={i}><div className="flex justify-between text-xs text-blue-300 font-bold mb-1 uppercase"><span>{s.label}</span></div><input type="range" min={s.min} max={s.max} step={s.step} value={s.val} onChange={(e) => s.set(parseFloat(e.target.value))} className="w-full" /></div>
+                                ))}
+                                {[
+                                    { label: "Constellation Lines", val: constellations, set: setConstellations },
+                                    { label: "Show Stars", val: showStars, set: setShowStars },
+                                    { label: "Show Clouds", val: showClouds, set: setShowClouds },
+                                    { label: "Retro CRT Mode", val: retroMode, set: setRetroMode, color: "text-purple-400" },
+                                    { label: "Auto-Focus Event", val: autoFocus, set: setAutoFocus }
+                                ].map((t, i) => (
+                                    <div key={i} className="flex items-center justify-between border-t border-white/10 pt-2">
+                                        <span className={`text-xs font-bold uppercase ${t.color || "text-blue-300"}`}>{t.label}</span>
+                                        <label className="relative inline-block w-10 h-5">
+                                            <input type="checkbox" checked={t.val} onChange={(e) => t.set(e.target.checked)} className="opacity-0 w-0 h-0 toggle-checkbox" />
+                                            <span className="toggle-label absolute cursor-pointer top-0 left-0 right-0 bottom-0 bg-gray-700 rounded-full transition-all duration-300"></span>
+                                            <span className={`absolute left-1 top-1 w-3 h-3 bg-white rounded-full transition-all duration-300 ${t.val ? 'translate-x-5' : ''}`}></span>
+                                        </label>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                    
+                    {/* --- LEFT SIDE COLLAPSIBLE PANELS (Desktop) --- */}
+                    <div className="absolute top-36 left-4 z-20 pointer-events-none flex flex-col gap-2 max-h-[calc(100vh-180px)] overflow-y-auto pr-2 pb-4 hidden sm:flex">
+                        <CollapsiblePanel title="Total Gamers" icon={<ChartIcon/>} isOpen={isGraphOpen} onToggle={() => setIsGraphOpen(!isGraphOpen)}>
+                            <GamersGraph currentYear={year} minYear={minYear} maxYear={maxYear} />
+                        </CollapsiblePanel>
+                        <CollapsiblePanel title="Industry Status" icon={<TrophyIcon/>} isOpen={isStatsOpen} onToggle={() => setIsStatsOpen(!isStatsOpen)}>
+                            <div className="space-y-4">
+                                <div className="flex justify-between items-center text-xs border-b border-white/10 pb-1 mb-2"><span className="text-gray-400 uppercase tracking-widest">Year</span><span className="text-white font-mono font-bold text-lg">{year}</span></div>
+                                <div className="stats-item flex items-center gap-3"><div className="p-2 bg-blue-900/30 rounded-lg text-blue-400"><GamepadIcon size={16}/></div><div><div className="text-[10px] text-gray-400 uppercase">Dominant Platform</div><div className="text-xs font-bold text-white leading-tight">{currentStats.platform}</div></div></div>
+                                <div className="stats-item flex items-center gap-3"><div className="p-2 bg-purple-900/30 rounded-lg text-purple-400"><MonitorIcon size={16}/></div><div><div className="text-[10px] text-gray-400 uppercase">Graphics Tech</div><div className="text-xs font-bold text-white leading-tight">{currentStats.gfx}</div></div></div>
+                                <div className="stats-item flex items-center gap-3"><div className="p-2 bg-green-900/30 rounded-lg text-green-400"><DollarIcon size={16}/></div><div><div className="text-[10px] text-gray-400 uppercase">Business Model</div><div className="text-xs font-bold text-white leading-tight">{currentStats.model}</div></div></div>
+                                <div className="stats-item flex items-center gap-3"><div className="p-2 bg-orange-900/30 rounded-lg text-orange-400"><UserIcon size={16}/></div><div><div className="text-[10px] text-gray-400 uppercase">Global Players</div><div className="text-xs font-bold text-white leading-tight">{currentStats.players}</div></div></div>
+                            </div>
+                        </CollapsiblePanel>
+                    </div>
+
+                    {/* --- RIGHT SIDE COLLAPSIBLE PANELS (Desktop) --- */}
+                    <div className="absolute top-36 right-4 z-20 pointer-events-none flex flex-col gap-2 max-h-[calc(100vh-180px)] overflow-y-auto pl-2 pb-4 hidden sm:flex">
+                        <CollapsiblePanel title="Market Share" icon={<TrophyIcon/>} isOpen={isLeaderboardOpen} onToggle={() => setIsLeaderboardOpen(!isLeaderboardOpen)} side="right">
+                            <div className="space-y-3 pt-2">
+                                {leaderboard.sort((a,b) => b.share - a.share).map((item, index) => (
+                                    <div key={item.name} className="relative">
+                                        <div className="flex justify-between items-end mb-1"><div className="flex items-center gap-2"><div className="w-10 h-10 flex items-center justify-center bg-white/10 rounded-md p-1.5"><img src={platformLogos[item.key]} alt={item.name} className="max-w-full max-h-full object-contain" /></div><span className="text-xs font-bold text-white leading-none">{item.name}</span></div><span className="text-[10px] text-gray-400 font-mono">{item.share}%</span></div>
+                                        <div className="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden"><div className="h-full rounded-full bar-fill" style={{width: `${item.share}%`, backgroundColor: item.color}}></div></div>
+                                    </div>
+                                ))}
+                            </div>
+                        </CollapsiblePanel>
+                    </div>
+
+                    {/* --- MOBILE BOTTOM DOCK --- */}
+                    <div className="fixed bottom-28 left-0 w-full z-40 pointer-events-auto sm:hidden px-4 flex justify-center gap-4">
+                        {[
+                            { id: 'stats', icon: <TrophyIcon/> },
+                            { id: 'leaderboard', icon: <ChartIcon/> },
+                            { id: 'graph', icon: <DollarIcon/> }
+                        ].map(tab => (
+                            <button 
+                                key={tab.id}
+                                onClick={() => setMobileTab(mobileTab === tab.id ? null : tab.id)} 
+                                className={`glass-panel p-3 rounded-full shadow-lg backdrop-blur-md transition-all ${mobileTab === tab.id ? 'bg-blue-600 border-blue-400 scale-110' : 'hover:scale-105'}`}
+                            >
+                                {tab.icon}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* --- MOBILE BOTTOM SHEET --- */}
+                    <div className={`glass-panel bottom-sheet p-4 sm:hidden z-50 ${mobileTab ? 'open' : ''}`}>
+                         {mobileTab && (
+                            <div className="flex flex-col h-full">
+                                <div className="flex justify-center mb-2" onClick={() => setMobileTab(null)}>
+                                    <div className="w-12 h-1.5 bg-white/20 rounded-full cursor-pointer"></div>
+                                </div>
+                                <div className="overflow-y-auto pb-8 custom-scrollbar">
+                                    {renderMobileContent()}
+                                </div>
+                            </div>
+                         )}
+                    </div>
+
+                    {/* --- POP-UP CARD ATTACHED TO GLOBE --- */}
+                    <div id="popup-card-container" ref={popupRef}>
+                         {selectedEvent && (
+                             <div className="popup-content">
+                                 <div className="glass-panel rounded-xl overflow-hidden border border-blue-500/30 shadow-2xl shadow-blue-900/40 backdrop-blur-xl">
+                                     <div className="h-16 w-full bg-black/60 flex items-center justify-center p-3 border-b border-white/5">
+                                         {selectedEvent.logo && <img src={selectedEvent.logo} alt="logo" className="max-h-full max-w-full object-contain filter drop-shadow-md" />}
+                                     </div>
+                                     <div className="h-40 w-full bg-gray-900 relative overflow-hidden group cursor-pointer" onClick={() => window.open(`https://www.google.com/search?q=${selectedEvent.title}+game`, '_blank')}>
+                                         {selectedEvent.cover ? (
+                                             <img src={selectedEvent.cover} alt={selectedEvent.title} className="w-full h-full object-cover opacity-90 transition-transform duration-700 group-hover:scale-105" />
+                                         ) : <div className="w-full h-full flex items-center justify-center img-placeholder text-gray-600">No Image</div>}
+                                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent"></div>
+                                         <div className="absolute top-2 right-2">
+                                            <span className="bg-blue-600/90 text-[10px] font-bold px-2 py-1 rounded text-white uppercase tracking-wider shadow-lg backdrop-blur-md border border-white/20">{selectedEvent.platform}</span>
+                                         </div>
+                                         <div className="absolute bottom-2 left-3 w-full pr-6">
+                                             <div className="text-4xl font-bold text-white/20 font-mono tracking-tighter leading-none select-none">{selectedEvent.year}</div>
+                                         </div>
+                                     </div>
+                                     <div className="p-4 relative bg-black/20">
+                                         <div className="flex justify-between items-center text-xs text-blue-300 mb-3 font-mono border-b border-white/10 pb-2">
+                                             <span className="flex items-center gap-1">📍 {selectedEvent.loc}</span>
+                                             <span className="opacity-70">{selectedEvent.genre}</span>
+                                         </div>
+                                         {selectedEvent.impact && (
+                                             <div className="mb-3 text-xs font-bold text-green-400 uppercase tracking-wide flex items-center gap-2"><TrophyIcon size={12}/> {selectedEvent.impact}</div>
+                                         )}
+                                         <p className="text-sm text-gray-300 leading-relaxed font-light mb-4">{selectedEvent.desc}</p>
+                                         <div className="flex justify-between items-center mt-2">
+                                             <div className="text-xs text-blue-400/80 font-mono">DEV: <span className="text-white">{selectedEvent.dev}</span></div>
+                                             <a href={`https://en.wikipedia.org/wiki/Special:Search?search=${selectedEvent.title} video game`} target="_blank" className="flex items-center gap-1 text-[10px] bg-white/10 hover:bg-white/20 px-2 py-1 rounded transition-colors text-white">Learn More <ExternalLinkIcon/></a>
+                                         </div>
+                                     </div>
+                                 </div>
+                                 <div className="connector-line"></div>
+                                 <div className="connector-dot"></div>
+                             </div>
+                         )}
+                    </div>
+
+                    {/* --- BOTTOM TIMELINE CONTROLS (FIXED) --- */}
+                    <div className="fixed bottom-0 left-0 w-full p-4 sm:p-6 z-50 flex flex-col items-center pointer-events-none">
+                        <div className="glass-panel w-full max-w-3xl rounded-full px-4 sm:px-6 py-3 sm:py-4 pointer-events-auto flex items-center gap-4 sm:gap-6 shadow-2xl shadow-black/80 border border-white/10 bg-black/60 backdrop-blur-xl">
+                            <button onClick={togglePlay} className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full bg-blue-600 hover:bg-blue-500 text-white transition-all hover:scale-105 shadow-lg shadow-blue-600/30 flex-shrink-0">
+                                {isPlaying ? <PauseIcon /> : <PlayIcon />}
+                            </button>
+                            <div className="flex-grow flex flex-col justify-center">
+                                <div className="flex justify-between text-[10px] text-blue-300 font-mono mb-1 uppercase tracking-wider">
+                                    <span>{minYear}</span>
+                                    <span>Current: {year}</span>
+                                    <span>{maxYear}</span>
+                                </div>
+                                <input type="range" min={minYear} max={maxYear} value={year} onChange={(e) => { setYear(parseInt(e.target.value)); setIsPlaying(false); }} className="w-full" />
+                            </div>
+                        </div>
+                        <div className="mt-2 text-[10px] text-gray-500 font-mono hidden sm:block pb-2">Use ← → keys to scrub, SPACE to play/pause</div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('app-root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
