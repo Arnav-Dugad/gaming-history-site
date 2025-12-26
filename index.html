@@ -45,7 +45,7 @@
             overflow: hidden;
         }
 
-        /* Glassmorphism */
+        /* Glassmorphism utility */
         .glass-panel {
             background: rgba(10, 15, 30, 0.85);
             backdrop-filter: blur(16px);
@@ -55,13 +55,13 @@
             transition: all 0.3s ease;
         }
 
-        /* Pop-up Card */
+        /* Pop-up Card Specifics */
         #popup-card-container {
             position: absolute;
             top: 0;
             left: 0;
             pointer-events: none;
-            z-index: 30; /* Behind UI overlay */
+            z-index: 30;
             transform-origin: bottom center;
             will-change: transform, opacity;
             transition: opacity 0.3s ease-out;
@@ -107,7 +107,7 @@
             box-shadow: 0 0 12px #ffffff, 0 0 24px #3b82f6;
         }
 
-        /* Sliders */
+        /* Range Slider Styling */
         input[type=range] {
             -webkit-appearance: none;
             background: transparent;
@@ -169,14 +169,14 @@
             left: 0;
             width: 100%;
             height: auto;
-            max-height: 75vh;
+            max-height: 70vh;
             border-top-left-radius: 24px;
             border-top-right-radius: 24px;
             overflow-y: auto;
             transform: translateY(120%);
             transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            z-index: 60; 
-            padding-bottom: 120px; /* Space for timeline controls */
+            z-index: 70; /* Above timeline (50) and backdrop (60) */
+            padding-bottom: 40px; /* Space for safe area */
         }
         .bottom-sheet.open {
             transform: translateY(0);
@@ -339,6 +339,7 @@
         const ChartIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>;
         const DiceIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="9" cy="9" r="1"></circle><circle cx="15" cy="15" r="1"></circle></svg>;
         const CloseIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>;
+        const ChevronDownIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>;
 
         // --- Gamers Graph Component ---
         const GamersGraph = ({ currentYear, minYear, maxYear }) => {
@@ -651,7 +652,7 @@
                         const positions = pGeo.attributes.position.array;
                         const velocities = pGeo.userData.velocities;
                         
-                        pGeo.userData.time += 0.005; // SLOWER PARTICLES
+                        pGeo.userData.time += 0.003; // Even Slower
                         particlesRef.current.material.opacity = 1 - pGeo.userData.time;
 
                         if (pGeo.userData.time >= 1) {
@@ -701,8 +702,24 @@
                             const dot = normal.dot(viewDir);
                             
                             if (dot > 0.15) {
-                                popupRef.current.style.transform = `translate(${x}px, ${y}px)`;
+                                // Clamp popup to screen
+                                const cardWidth = window.innerWidth < 640 ? 300 : 360;
+                                const padding = 20;
+                                
+                                let clampedX = x;
+                                if (x - cardWidth/2 < padding) clampedX = cardWidth/2 + padding;
+                                if (x + cardWidth/2 > window.innerWidth - padding) clampedX = window.innerWidth - cardWidth/2 - padding;
+
+                                popupRef.current.style.transform = `translate(${clampedX}px, ${y}px) translate(-50%, -100%)`;
                                 popupRef.current.style.opacity = "1";
+                                
+                                // Adjust connector line skew
+                                const connector = popupRef.current.querySelector('.connector-line');
+                                if(connector) {
+                                    const skew = x - clampedX;
+                                    connector.style.transform = `translateX(-50%) translateX(${skew}px) skewX(${skew/10}deg)`;
+                                    connector.style.height = `${Math.max(30, 45 + Math.abs(skew/3))}px`; 
+                                }
                             } else {
                                 popupRef.current.style.opacity = "0";
                             }
@@ -824,7 +841,7 @@
              );
         };
 
-        // --- Main App Component ---
+        // --- Main UI Application ---
         const App = () => {
             const minYear = 1970;
             const maxYear = 2025; 
@@ -843,27 +860,29 @@
             const [rotationSpeed, setRotationSpeed] = useState(0.5);
             const [playbackSpeed, setPlaybackSpeed] = useState(1200);
             const [markerScale, setMarkerScale] = useState(1);
-            const [autoFocus, setAutoFocus] = useState(false); // DEFAULT FALSE as requested in turn 5
+            const [autoFocus, setAutoFocus] = useState(false); 
             const [showStars, setShowStars] = useState(true);
             const [showClouds, setShowClouds] = useState(true);
             const [atmosphereIntensity, setAtmosphereIntensity] = useState(1);
+            const [retroMode, setRetroMode] = useState(false);
             const [constellations, setConstellations] = useState(false);
             const [theme, setTheme] = useState('realistic');
-            const [retroMode, setRetroMode] = useState(false);
-            
-            const [selectedEvent, setSelectedEvent] = useState(null);
-            
-            // Desktop Panel States
+
             const [isStatsOpen, setIsStatsOpen] = useState(true);
             const [isGraphOpen, setIsGraphOpen] = useState(true);
             const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(true);
-
-            // Filters
-            const [activeFilters, setActiveFilters] = useState({ platform: "All", genre: "All", region: "All" });
+            
+            const [activeFilters, setActiveFilters] = useState({
+                platform: "All",
+                genre: "All",
+                region: "All"
+            });
+            
+            const [selectedEvent, setSelectedEvent] = useState(null);
 
             const popupRef = useRef(null);
 
-            // FUNCTIONS DEFINED BEFORE USE
+            // Function Definitions Moved Inside Component or Defined Before
             const togglePlay = () => {
                 if (year >= maxYear) setYear(minYear);
                 setIsPlaying(!isPlaying);
@@ -946,12 +965,11 @@
             const currentStats = getStatsForYear(year);
             const leaderboard = getLeaderboardData(year);
 
-            // Render Mobile Content Helper
             const renderMobileContent = () => {
                  if (mobileTab === 'stats') {
                      return (
                          <div className="space-y-4">
-                             <div className="flex justify-between items-center border-b border-white/20 pb-2 mb-2"><h3 className="text-sm font-bold text-blue-300 uppercase flex items-center gap-2"><TrophyIcon/> Status ({year})</h3></div>
+                             <div className="flex justify-between items-center border-b border-white/20 pb-2 mb-2"><h3 className="text-sm font-bold text-blue-300 uppercase flex items-center gap-2"><TrophyIcon/> Status ({year})</h3><button onClick={() => setMobileTab(null)} className="p-2 bg-white/10 rounded-full"><CloseIcon size={20}/></button></div>
                              <div className="grid grid-cols-2 gap-4">
                                  <div><div className="text-[10px] text-gray-400">Platform</div><div className="text-xs font-bold">{currentStats.platform}</div></div>
                                  <div><div className="text-[10px] text-gray-400">Tech</div><div className="text-xs font-bold">{currentStats.gfx}</div></div>
@@ -964,7 +982,7 @@
                  if (mobileTab === 'leaderboard') {
                      return (
                          <div className="space-y-2">
-                             <div className="flex justify-between items-center border-b border-white/20 pb-2 mb-2"><h3 className="text-sm font-bold text-blue-300 uppercase flex items-center gap-2"><ChartIcon/> Share ({year})</h3></div>
+                             <div className="flex justify-between items-center border-b border-white/20 pb-2 mb-2"><h3 className="text-sm font-bold text-blue-300 uppercase flex items-center gap-2"><ChartIcon/> Share ({year})</h3><button onClick={() => setMobileTab(null)} className="p-2 bg-white/10 rounded-full"><CloseIcon size={20}/></button></div>
                              {leaderboard.sort((a,b) => b.share - a.share).map((item) => (
                                  <div key={item.name} className="relative">
                                      <div className="flex justify-between text-xs mb-1">
@@ -980,7 +998,7 @@
                  if (mobileTab === 'graph') {
                      return (
                          <div className="space-y-2">
-                              <div className="flex justify-between items-center border-b border-white/20 pb-2 mb-2"><h3 className="text-sm font-bold text-blue-300 uppercase flex items-center gap-2"><DollarIcon/> Growth</h3></div>
+                              <div className="flex justify-between items-center border-b border-white/20 pb-2 mb-2"><h3 className="text-sm font-bold text-blue-300 uppercase flex items-center gap-2"><DollarIcon/> Growth</h3><button onClick={() => setMobileTab(null)} className="p-2 bg-white/10 rounded-full"><CloseIcon size={20}/></button></div>
                               <GamersGraph currentYear={year} minYear={minYear} maxYear={maxYear} />
                          </div>
                      )
@@ -1004,7 +1022,7 @@
                     />
 
                     {/* TOP BAR */}
-                    <div className="fixed top-0 left-0 w-full z-50 pointer-events-none p-4 flex flex-col gap-2">
+                    <div className="fixed top-0 left-0 w-full z-50 pointer-events-none p-4 flex flex-col gap-2 pt-10 sm:pt-4">
                         <div className="flex justify-between items-start">
                             <div className="glass-panel px-4 py-2 rounded-lg pointer-events-auto border-l-2 border-blue-500">
                                 <h1 className="text-lg md:text-xl font-bold tracking-widest text-white">GAME_HISTORY</h1>
@@ -1055,7 +1073,7 @@
 
                     {/* MODALS */}
                     {showSearch && (
-                        <div className={`glass-panel p-4 z-60 ${window.innerWidth < 640 ? 'fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-11/12 rounded-xl' : 'absolute top-24 right-4 w-72 rounded-lg'}`}>
+                        <div className={`glass-panel p-4 z-70 ${window.innerWidth < 640 ? 'fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-11/12 rounded-xl' : 'absolute top-24 right-4 w-72 rounded-lg'}`}>
                             <div className="flex justify-between mb-2"><span className="text-xs text-gray-400">Search</span><button onClick={()=>setShowSearch(false)}><CloseIcon size={16}/></button></div>
                             <input type="text" autoFocus className="w-full bg-black/50 border border-white/20 rounded p-2 text-sm text-white mb-2" placeholder="Search game..." value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} />
                             <div className="max-h-60 overflow-y-auto custom-scrollbar">
@@ -1069,7 +1087,7 @@
                     )}
 
                     {showSettings && (
-                         <div className={`glass-panel p-4 z-60 flex flex-col gap-4 ${window.innerWidth < 640 ? 'fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-11/12 max-h-[80vh] overflow-y-auto rounded-xl' : 'absolute top-24 right-4 w-72 max-h-[70vh] overflow-y-auto rounded-lg'}`}>
+                         <div className={`glass-panel p-4 z-70 flex flex-col gap-4 ${window.innerWidth < 640 ? 'fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-11/12 max-h-[80vh] overflow-y-auto rounded-xl' : 'absolute top-24 right-4 w-72 max-h-[70vh] overflow-y-auto rounded-lg'}`}>
                              <div className="flex justify-between"><span className="text-xs text-gray-400">Settings</span><button onClick={()=>setShowSettings(false)}><CloseIcon/></button></div>
                              <div>
                                  <div className="text-xs text-blue-300 font-bold mb-2">THEME</div>
@@ -1088,7 +1106,7 @@
                     )}
                     
                     {showFilters && (
-                        <div className={`glass-panel p-4 z-60 space-y-4 ${window.innerWidth < 640 ? 'fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-11/12 rounded-xl' : 'absolute top-24 right-4 w-64 rounded-lg'}`}>
+                        <div className={`glass-panel p-4 z-70 space-y-4 ${window.innerWidth < 640 ? 'fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-11/12 rounded-xl' : 'absolute top-24 right-4 w-64 rounded-lg'}`}>
                              <div className="flex justify-between"><span className="text-xs text-gray-400">Filters</span><button onClick={()=>setShowFilters(false)}><CloseIcon/></button></div>
                              <div>
                                  <div className="text-xs text-gray-400 mb-1">Platform</div>
@@ -1111,7 +1129,7 @@
                     </div>
 
                     {/* MOBILE BOTTOM SHEET */}
-                    <div className={`glass-panel bottom-sheet p-4 sm:hidden z-50 ${mobileTab ? 'open' : ''}`}>
+                    <div className={`glass-panel bottom-sheet p-4 sm:hidden z-70 ${mobileTab ? 'open' : ''}`}>
                          {mobileTab && (
                             <div className="flex flex-col h-full">
                                 <div className="flex justify-center mb-2" onClick={() => setMobileTab(null)}>
