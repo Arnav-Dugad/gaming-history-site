@@ -80,6 +80,7 @@
             top: 0;
             left: 0;
             will-change: transform;
+            pointer-events: none; /* Default to none, enabled via JS when visible */
         }
 
         .popup-content {
@@ -454,12 +455,14 @@
             const cloudRef = useRef(null);
             const starsRef = useRef(null);
             const atmosphereRef = useRef(null);
-            const targetCameraPosRef = useRef(null);
             const raycaster = useRef(new THREE.Raycaster());
             const mouse = useRef(new THREE.Vector2());
             const particlesRef = useRef(null); 
             const pointerDownPos = useRef({ x: 0, y: 0 });
             
+            // Focus state
+            const [focusTarget, setFocusTarget] = useState(null);
+
             const stateRef = useRef({ selectedEvent, autoFocus, visibleEvents, markerScale, theme });
             useEffect(() => { stateRef.current = { selectedEvent, autoFocus, visibleEvents, markerScale, theme }; }, [selectedEvent, autoFocus, visibleEvents, markerScale, theme]);
 
@@ -484,7 +487,8 @@
                             sphere.material.map = null;
                         } else {
                             sphere.material.wireframe = false;
-                            sphere.material.color.setHex(0x333333);
+                            // FIX: Changed from 0x2233ff to 0xffffff (White) to fix blue tint
+                            sphere.material.color.setHex(0xffffff);
                             sphere.material.emissive.setHex(0x000000);
                         }
                     }
@@ -514,7 +518,8 @@
             }, [selectedEvent]);
 
             useEffect(() => {
-                if(atmosphereRef.current) atmosphereRef.current.material.opacity = atmosphereIntensity * 0.15;
+                // FIX: Reduced opacity slightly
+                if(atmosphereRef.current) atmosphereRef.current.material.opacity = atmosphereIntensity * 0.1;
             }, [atmosphereIntensity]);
 
             useEffect(() => {
@@ -523,14 +528,15 @@
             }, [showClouds, showStars, theme]);
 
             useEffect(() => {
-                if (autoFocus && selectedEvent && cameraRef.current) {
+                // FIX: Always focus when an event is selected, or if autoFocus is enabled
+                if (selectedEvent && cameraRef.current) {
                     const radius = 24; 
                     const vec = latLongToVector3(selectedEvent.lat, selectedEvent.lon, radius);
-                    targetCameraPosRef.current = vec;
-                } else {
-                    targetCameraPosRef.current = null;
+                    setFocusTarget(vec);
+                } else if (!selectedEvent) {
+                    setFocusTarget(null);
                 }
-            }, [selectedEvent, autoFocus]);
+            }, [selectedEvent]); // Trigger whenever selected event changes
 
             // --- Init Three.js ---
             useEffect(() => {
@@ -557,7 +563,7 @@
                 controls.autoRotate = true;
                 controlsRef.current = controls;
 
-                const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
+                const ambientLight = new THREE.AmbientLight(0xffffff, 0.4);
                 scene.add(ambientLight);
                 const sunLight = new THREE.DirectionalLight(0xffffff, 1.2);
                 sunLight.position.set(50, 30, 50);
@@ -567,6 +573,8 @@
                 scene.add(backLight);
 
                 const globeGroup = new THREE.Group();
+                // FIX: Rotate Earth to align with texture coordinates correctly
+                globeGroup.rotation.y = -Math.PI / 2;
                 scene.add(globeGroup);
                 globeRef.current = globeGroup;
 
@@ -577,9 +585,10 @@
                 const cloudMap = textureLoader.load('https://raw.githubusercontent.com/mrdoob/three.js/master/examples/textures/planets/earth_clouds_1024.png');
 
                 const geometry = new THREE.SphereGeometry(10, 64, 64);
+                // FIX: Base color white
                 const material = new THREE.MeshPhongMaterial({
                     map: earthMap, normalMap: earthNormal, specularMap: earthSpecular,
-                    color: 0x2233ff, specular: new THREE.Color(0x333333), shininess: 5
+                    color: 0xffffff, specular: new THREE.Color(0x333333), shininess: 5
                 });
                 const sphere = new THREE.Mesh(geometry, material);
                 globeGroup.add(sphere);
@@ -589,7 +598,7 @@
                 cloudRef.current = clouds;
                 globeGroup.add(clouds);
 
-                const atmosphereMat = new THREE.MeshPhongMaterial({ color: 0x44aaff, transparent: true, opacity: 0.15, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false });
+                const atmosphereMat = new THREE.MeshPhongMaterial({ color: 0x44aaff, transparent: true, opacity: 0.1, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false });
                 const atmosphere = new THREE.Mesh(new THREE.SphereGeometry(10.25, 64, 64), atmosphereMat);
                 atmosphereRef.current = atmosphere;
                 globeGroup.add(atmosphere);
@@ -623,7 +632,7 @@
 
                 // --- Interaction ---
                 const onPointerDown = (event) => {
-                    targetCameraPosRef.current = null;
+                    setFocusTarget(null); // Stop auto-focusing if user drags
                     pointerDownPos.current = { x: event.clientX, y: event.clientY };
                 };
                 
@@ -648,19 +657,64 @@
 
                 // --- Animation Loop ---
                 const tempV = new THREE.Vector3();
+                let currentFocusTarget = null; // Local var for animation closure
+
                 const animate = () => {
                     requestAnimationFrame(animate);
                     const { selectedEvent, autoFocus, markerScale } = stateRef.current;
                     const time = Date.now() * 0.001;
 
                     if (cloudRef.current && cloudRef.current.visible) cloudRef.current.rotation.y += 0.0003;
-                    controls.update();
+                    
+                    // FIX: Camera Focus Logic
+                    // We check the React state hook via the closure or ref logic
+                    // Here we access the state passed down via props, but we need the latest value
+                    // The 'focusTarget' state is updated via setFocusTarget
+                    // But inside animate loop, we can't access updated state easily without a Ref unless we use the mutable ref pattern.
+                    // However, we set 'focusTarget' in state, so we need to pass it into a Ref or use it from props if it was a prop. 
+                    // Since it's local state, let's use a Ref for the target to ensure the loop sees it.
+                    // ACTUALLY: We will rely on setFocusTarget triggering re-renders is tricky with ThreeJS loops.
+                    // BETTER: Use a ref for the focus target inside the component.
+                };
 
-                    if (targetCameraPosRef.current && autoFocus) {
-                        camera.position.lerp(targetCameraPosRef.current, 0.03);
-                        controls.target.set(0,0,0);
-                        if (camera.position.distanceTo(targetCameraPosRef.current) < 0.5) targetCameraPosRef.current = null;
+                // RE-IMPLEMENTING ANIMATE LOOP WITH REF ACCESS FOR FOCUS
+                // We need to move the loop definition to ensure it captures the ref
+            }, []); // End useEffect
+
+            // We need a way to pass the focus target to the animation loop.
+            // Let's use a ref that we update when the state changes.
+            const focusTargetRef = useRef(null);
+            useEffect(() => { focusTargetRef.current = focusTarget; }, [focusTarget]);
+
+            // Re-bind animate loop logic cleanly
+            useEffect(() => {
+                if(!globeRef.current) return;
+                
+                const animate = () => {
+                    requestAnimationFrame(animate);
+                    const { selectedEvent, markerScale, autoFocus } = stateRef.current;
+                    const time = Date.now() * 0.001;
+                    
+                    if (cloudRef.current && cloudRef.current.visible) cloudRef.current.rotation.y += 0.0003;
+
+                    // FIX: Focus Logic
+                    if (focusTargetRef.current) {
+                        // Interpolate camera position
+                        cameraRef.current.position.lerp(focusTargetRef.current, 0.04);
+                        controlsRef.current.target.set(0,0,0);
+                        
+                        // Stop focusing if close enough? No, keep locked for smoothness until user interaction
+                        // But we DO need to stop rotation
+                        controlsRef.current.autoRotate = false;
+                    } else {
+                        // Auto-rotate if enabled in settings and not focusing
+                        controlsRef.current.autoRotate = rotationSpeed > 0 && !stateRef.current.autoFocus; // Wait, autoFocus prop is "Auto-Focus Event" toggle? 
+                        // Let's interpret rotationSpeed > 0 as "Idle Rotation".
+                        // If we are just idling, rotate.
+                        controlsRef.current.autoRotate = rotationSpeed > 0;
                     }
+                    
+                    controlsRef.current.update();
 
                     // Particles
                     if (particlesRef.current && particlesRef.current.geometry.userData.active) {
@@ -678,44 +732,43 @@
                         }
                     }
 
-                    // Markers & Popup Update
+                    // Markers Update
                     let activeMarker = null;
-                    markerGroup.children.forEach(marker => {
-                        const isSelected = selectedEvent && marker.userData.data.title === selectedEvent.title;
-                        if (isSelected) activeMarker = marker;
-                        if (marker.userData.active || isSelected) {
-                            const scale = (1 + Math.sin(time * 3 + marker.userData.offset) * 0.2) * markerScale;
-                            marker.scale.set(1, scale, 1);
-                            marker.material.color.setHex(isSelected ? 0x00ffff : 0xff3366);
-                        } else {
-                            marker.scale.set(1, markerScale, 1);
-                            marker.material.color.setHex(0xffffff);
-                        }
-                    });
+                    if(markerGroupRef.current) {
+                        markerGroupRef.current.children.forEach(marker => {
+                            const isSelected = selectedEvent && marker.userData.data.title === selectedEvent.title;
+                            if (isSelected) activeMarker = marker;
+                            if (marker.userData.active || isSelected) {
+                                const scale = (1 + Math.sin(time * 3 + marker.userData.offset) * 0.2) * markerScale;
+                                marker.scale.set(1, scale, 1);
+                                marker.material.color.setHex(isSelected ? 0x00ffff : 0xff3366);
+                            } else {
+                                marker.scale.set(1, markerScale, 1);
+                                marker.material.color.setHex(0xffffff);
+                            }
+                        });
+                    }
 
                     // -----------------------------------------------------
-                    // FIXED POPUP LOGIC
+                    // POPUP LOGIC REFINED
                     // -----------------------------------------------------
-                    if (activeMarker && popupRef.current) {
-                        // 1. Get 3D position
+                    if (activeMarker && popupRef.current && cameraRef.current) {
+                        const tempV = new THREE.Vector3();
                         activeMarker.getWorldPosition(tempV);
-                        
-                        // 2. Project to 2D screen coordinates
-                        tempV.project(camera);
+                        tempV.project(cameraRef.current);
                         
                         const widthHalf = window.innerWidth / 2;
                         const heightHalf = window.innerHeight / 2;
-
                         const x = (tempV.x * widthHalf) + widthHalf;
                         const y = -(tempV.y * heightHalf) + heightHalf;
 
-                        // Check visibility (dot product with camera direction)
                         const worldPos = activeMarker.getWorldPosition(new THREE.Vector3());
                         const normal = worldPos.clone().normalize();
-                        const viewDir = camera.position.clone().sub(worldPos).normalize();
+                        const viewDir = cameraRef.current.position.clone().sub(worldPos).normalize();
                         const dot = normal.dot(viewDir);
 
-                        if (dot > 0.1 && tempV.z < 1) { // Visible and in front of camera
+                        // Only show if facing camera and in front
+                        if (dot > 0.2 && tempV.z < 1) { 
                             const popupAnchor = popupRef.current.querySelector('.popup-anchor');
                             if (popupAnchor) {
                                 // Clamp X to keep it inside screen
@@ -725,38 +778,31 @@
                                 if (x < cardWidth/2 + padding) clampedX = cardWidth/2 + padding;
                                 if (x > window.innerWidth - cardWidth/2 - padding) clampedX = window.innerWidth - cardWidth/2 - padding;
 
-                                // Position the anchor
                                 popupAnchor.style.transform = `translate(${clampedX}px, ${y}px)`;
                                 popupAnchor.style.opacity = "1";
                                 popupAnchor.style.pointerEvents = "auto";
 
-                                // Handle vertical flip if near top
                                 const content = popupAnchor.querySelector('.popup-content');
                                 const line = popupAnchor.querySelector('.connector-line');
-                                const dotEl = popupAnchor.querySelector('.connector-dot');
                                 
-                                let isFlipped = false;
-                                if (y < 280) isFlipped = true;
+                                // Vertical Flip Logic
+                                const isFlipped = y < 300; // Threshold from top
 
                                 if (content && line) {
                                     const skew = x - clampedX;
                                     
                                     if (isFlipped) {
-                                        content.style.transform = `translate(-50%, 45px)`; // Move down
+                                        content.style.transform = `translate(-50%, 45px)`; 
                                         line.style.transform = `translateX(-50%) translateX(${skew}px) skewX(${skew/10}deg) scaleY(-1)`;
                                         line.style.bottom = "auto";
                                         line.style.top = "0";
-                                        if (dotEl) dotEl.style.bottom = "auto";
-                                        if (dotEl) dotEl.style.top = "-4px";
                                     } else {
-                                        content.style.transform = `translate(-50%, -100%)`; // Default up
+                                        content.style.transform = `translate(-50%, -100%)`; 
                                         line.style.transform = `translateX(-50%) translateX(${skew}px) skewX(${skew/10}deg)`;
                                         line.style.bottom = "0";
                                         line.style.top = "auto";
-                                        if (dotEl) dotEl.style.bottom = "-4px";
-                                        if (dotEl) dotEl.style.top = "auto";
                                     }
-                                    line.style.height = `${Math.max(30, 45 + Math.abs(skew/4))}px`;
+                                    line.style.height = `${Math.max(45, 60 + Math.abs(skew/3))}px`; // Adjusted length
                                 }
                             }
                         } else {
@@ -774,31 +820,17 @@
                         }
                     }
 
-                    renderer.render(scene, camera);
+                    renderer.render(scene, cameraRef.current);
                 };
-                animate();
-
-                const handleResize = () => {
-                    camera.aspect = window.innerWidth / window.innerHeight;
-                    camera.updateProjectionMatrix();
-                    renderer.setSize(window.innerWidth, window.innerHeight);
-                    camera.position.z = window.innerWidth < 768 ? 42 : 32;
-                };
-                window.addEventListener('resize', handleResize);
-
-                return () => {
-                    mountRef.current.removeChild(renderer.domElement);
-                    renderer.domElement.removeEventListener('pointerdown', onPointerDown);
-                    renderer.domElement.removeEventListener('pointerup', onPointerUp);
-                    window.removeEventListener('resize', handleResize);
-                };
-            }, []);
+                
+                const frameId = requestAnimationFrame(animate);
+                return () => cancelAnimationFrame(frameId);
+            }, [rotationSpeed]); // Re-bind if rotation speed setting changes, though refs handle most
 
             // --- Marker/Line Updates ---
             useEffect(() => {
-                if(controlsRef.current) controlsRef.current.autoRotate = rotationSpeed > 0 && !stateRef.current.autoFocus;
                 if(controlsRef.current) controlsRef.current.autoRotateSpeed = rotationSpeed;
-            }, [rotationSpeed, autoFocus]);
+            }, [rotationSpeed]);
 
             useEffect(() => {
                 if (!markerGroupRef.current) return;
@@ -881,7 +913,7 @@
             const [rotationSpeed, setRotationSpeed] = useState(0.5);
             const [playbackSpeed, setPlaybackSpeed] = useState(1200);
             const [markerScale, setMarkerScale] = useState(1);
-            const [autoFocus, setAutoFocus] = useState(false); 
+            const [autoFocus, setAutoFocus] = useState(true); // Default to TRUE for "Auto Focus on Play" concept if desired, but user clicked focus works independently now
             const [showStars, setShowStars] = useState(true);
             const [showClouds, setShowClouds] = useState(true);
             const [atmosphereIntensity, setAtmosphereIntensity] = useState(1);
@@ -1058,7 +1090,7 @@
                         </div>
                     </div>
 
-                    {/* DESKTOP SIDE PANELS (LEFT) - MOVED SHARE BOX HERE */}
+                    {/* DESKTOP SIDE PANELS (LEFT) */}
                     <div className="absolute top-36 left-4 z-20 hidden md:flex flex-col gap-2 max-h-[calc(100vh-180px)] overflow-y-auto pr-2 custom-scrollbar">
                          <CollapsiblePanel title="Growth" icon={<DollarIcon/>} isOpen={isGraphOpen} onToggle={() => setIsGraphOpen(!isGraphOpen)}><GamersGraph currentYear={year} minYear={minYear} maxYear={maxYear}/></CollapsiblePanel>
                          
@@ -1071,7 +1103,6 @@
                              </div>
                          </CollapsiblePanel>
 
-                         {/* MOVED FROM RIGHT TO LEFT */}
                          <CollapsiblePanel title="Market Share" icon={<ChartIcon/>} isOpen={isLeaderboardOpen} onToggle={() => setIsLeaderboardOpen(!isLeaderboardOpen)}>
                              <div className="space-y-3">
                                  {leaderboard.sort((a,b) => b.share - a.share).map(i => (
@@ -1084,7 +1115,7 @@
                          </CollapsiblePanel>
                     </div>
 
-                    {/* MODALS - REDESIGNED */}
+                    {/* MODALS */}
                     {showSearch && (
                         <div className={`ui-modal p-5 z-80 flex flex-col gap-4 shadow-2xl ${window.innerWidth < 640 ? 'fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-11/12 rounded-xl' : 'absolute top-24 right-4 w-80 rounded-xl'}`}>
                             <div className="flex justify-between items-center border-b border-white/10 pb-2">
@@ -1133,10 +1164,6 @@
                              </div>
 
                              <div className="space-y-3 pt-2 border-t border-white/5">
-                                 <label className="flex justify-between items-center cursor-pointer group">
-                                     <span className="text-xs group-hover:text-white transition-colors">Auto-Focus Event</span>
-                                     <input type="checkbox" className="accent-blue-500 w-4 h-4" checked={autoFocus} onChange={e=>setAutoFocus(e.target.checked)}/>
-                                 </label>
                                  <label className="flex justify-between items-center cursor-pointer group">
                                      <span className="text-xs group-hover:text-white transition-colors">Show Stars</span>
                                      <input type="checkbox" className="accent-blue-500 w-4 h-4" checked={showStars} onChange={e=>setShowStars(e.target.checked)}/>
