@@ -45,7 +45,7 @@
             overflow: hidden;
         }
 
-        /* Glassmorphism utility */
+        /* Glassmorphism */
         .glass-panel {
             background: rgba(10, 15, 30, 0.85);
             backdrop-filter: blur(16px);
@@ -55,7 +55,7 @@
             transition: all 0.3s ease;
         }
 
-        /* Pop-up Card Specifics */
+        /* Pop-up Card */
         #popup-card-container {
             position: absolute;
             top: 0;
@@ -107,7 +107,7 @@
             box-shadow: 0 0 12px #ffffff, 0 0 24px #3b82f6;
         }
 
-        /* Range Slider Styling */
+        /* Sliders */
         input[type=range] {
             -webkit-appearance: none;
             background: transparent;
@@ -169,7 +169,7 @@
             left: 0;
             width: 100%;
             height: auto;
-            max-height: 70vh;
+            max-height: 75vh;
             border-top-left-radius: 24px;
             border-top-right-radius: 24px;
             overflow-y: auto;
@@ -213,7 +213,7 @@
         const { useState, useEffect, useRef, useMemo } = React;
 
         // ==========================================
-        // 1. ALL DATA & HELPERS DEFINED FIRST
+        // 1. DATA DEFINITIONS
         // ==========================================
 
         const milestones = [
@@ -324,8 +324,23 @@
             return new THREE.Vector3(x, y, z);
         }
 
-        // --- React Components ---
+        // --- Icons ---
+        const PlayIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>;
+        const PauseIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>;
+        const SearchIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>;
+        const SettingsIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>;
+        const FilterIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>;
+        const GamepadIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="6" y1="12" x2="10" y2="12"></line><line x1="8" y1="10" x2="8" y2="14"></line><line x1="15" y1="13" x2="15.01" y2="13"></line><line x1="18" y1="11" x2="18.01" y2="11"></line><rect x="2" y="6" width="20" height="12" rx="2"></rect></svg>;
+        const MonitorIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>;
+        const DollarIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>;
+        const UserIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>;
+        const ExternalLinkIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>;
+        const TrophyIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 21h8v-2l1-1v-4h-10v4l1 1v2z"></path><path d="M12 2a6 6 0 0 1 6 6v7h-12v-7a6 6 0 0 1 6-6z"></path><path d="M18 11h2a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-2"></path><path d="M6 11h-2a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2h2"></path></svg>;
+        const ChartIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>;
+        const DiceIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="9" cy="9" r="1"></circle><circle cx="15" cy="15" r="1"></circle></svg>;
+        const CloseIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>;
 
+        // --- Gamers Graph Component ---
         const GamersGraph = ({ currentYear, minYear, maxYear }) => {
             const dataPoints = useMemo(() => {
                 const points = [];
@@ -352,28 +367,29 @@
             return (
                 <div className="w-full relative">
                     <div className="text-right text-xs font-bold text-blue-400 mb-1">
-                        {currentCount > 1000 ? (currentCount/1000).toFixed(1) + 'B' : currentCount.toFixed(0) + 'M'} Players
+                        {currentCount > 1000 ? (currentCount/1000).toFixed(1) + 'B' : currentCount.toFixed(0) + 'M'} Active
                     </div>
                     <svg width="100%" height={height} viewBox={`0 0 ${width} ${height}`} className="overflow-visible">
                         {yTicks.map(tick => (
                             <g key={tick}>
                                 <line x1={padding} y1={getY(tick)} x2={width-padding} y2={getY(tick)} stroke="#333" strokeWidth="1"/>
-                                <text x={padding-2} y={getY(tick)+3} textAnchor="end" fill="#555" fontSize="8">{tick >= 1000 ? tick/1000+'B' : tick}</text>
+                                <text x={padding-2} y={getY(tick)+3} textAnchor="end" fill="#666" fontSize="8">{tick >= 1000 ? tick/1000+'B' : tick}</text>
                             </g>
                         ))}
                         {xTicks.map(tick => (
-                            <text key={tick} x={getX(tick)} y={height-5} textAnchor="middle" fill="#555" fontSize="8">{tick}</text>
+                            <text key={tick} x={getX(tick)} y={height-5} textAnchor="middle" fill="#666" fontSize="8">{tick}</text>
                         ))}
                         {dataPoints.map((p, i) => (
-                            <rect key={i} x={getX(p.year) - 3} y={padding} width="6" height={height - 2*padding} fill="transparent" onMouseEnter={() => setHoveredPoint(p)} onMouseLeave={() => setHoveredPoint(null)} className="cursor-crosshair"/>
+                            <rect key={i} x={getX(p.year) - 4} y={0} width="8" height={height} fill="transparent" onMouseEnter={() => setHoveredPoint(p)} onMouseLeave={() => setHoveredPoint(null)} className="cursor-crosshair"/>
                         ))}
                         <path d={pathD} fill="none" stroke="#3b82f6" strokeWidth="2" />
                         {activePoints.length > 0 && (
-                            <circle cx={getX(activePoints[activePoints.length-1].year)} cy={getY(activePoints[activePoints.length-1].count)} r="4" fill="#fff" className="animate-pulse"/>
+                            <circle cx={getX(activePoints[activePoints.length-1].year)} cy={getY(activePoints[activePoints.length-1].count)} r="3" fill="#fff" className="animate-pulse"/>
                         )}
                         {hoveredPoint && (
                             <g>
-                                <circle cx={getX(hoveredPoint.year)} cy={getY(hoveredPoint.count)} r="3" fill="#fbbf24" />
+                                <line x1={getX(hoveredPoint.year)} y1={padding} x2={getX(hoveredPoint.year)} y2={height-padding} stroke="#fbbf24" strokeWidth="1" strokeDasharray="2,2" />
+                                <circle cx={getX(hoveredPoint.year)} cy={getY(hoveredPoint.count)} r="4" fill="#fbbf24" />
                                 <text x={width/2} y={10} textAnchor="middle" fill="#fbbf24" fontSize="10" fontWeight="bold">
                                     {hoveredPoint.year}: {hoveredPoint.count > 1000 ? (hoveredPoint.count/1000).toFixed(1) + 'B' : hoveredPoint.count.toFixed(0) + 'M'}
                                 </text>
@@ -384,6 +400,7 @@
             );
         };
 
+        // --- Globe Component ---
         const Globe = ({ currentYear, popupRef, selectedEvent, onMarkerClick, rotationSpeed, autoFocus, visibleEvents, markerScale, showStars, showClouds, atmosphereIntensity, constellations, theme }) => {
             const mountRef = useRef(null);
             const markersRef = useRef([]);
@@ -634,7 +651,7 @@
                         const positions = pGeo.attributes.position.array;
                         const velocities = pGeo.userData.velocities;
                         
-                        pGeo.userData.time += 0.002; // SLOWER PARTICLES (0.002 instead of 0.005)
+                        pGeo.userData.time += 0.005; // SLOWER PARTICLES
                         particlesRef.current.material.opacity = 1 - pGeo.userData.time;
 
                         if (pGeo.userData.time >= 1) {
@@ -792,50 +809,22 @@
             return <div ref={mountRef} id="canvas-container" />;
         };
 
-        const CollapsiblePanel = ({ title, icon, children, isOpen, onToggle, side="left" }) => {
-            const borderClass = side === "left" ? "border-l-4" : "border-r-4";
-            
-            return (
-                <div className={`glass-panel rounded-xl shadow-xl ${borderClass} border-blue-600 w-64 md:w-72 overflow-hidden mb-2 pointer-events-auto hidden sm:block`}>
-                    <div 
-                        className="flex justify-between items-center p-3 cursor-pointer hover:bg-white/5 transition-colors"
-                        onClick={onToggle}
-                    >
-                        <h3 className="text-xs font-bold text-gray-300 uppercase tracking-widest flex items-center gap-2">
-                            {icon} {title}
-                        </h3>
-                        <div className={`transform transition-transform duration-300 text-gray-400 ${isOpen ? 'rotate-180' : ''}`}>
-                            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
-                        </div>
-                    </div>
-                    
-                    <div className={`collapsible-container ${isOpen ? 'expanded' : 'collapsed'}`}>
-                        <div className="p-4 pt-0">
-                            {children}
-                        </div>
-                    </div>
-                </div>
-            );
+        const CollapsiblePanel = ({ title, icon, children, isOpen, onToggle, side="left", className="" }) => {
+             const borderClass = side === "left" ? "border-l-4" : "border-r-4";
+             return (
+                 <div className={`glass-panel rounded-xl shadow-xl ${borderClass} border-blue-600 w-64 md:w-72 overflow-hidden mb-2 pointer-events-auto ${className}`}>
+                     <div className="flex justify-between items-center p-3 cursor-pointer hover:bg-white/5 transition-colors" onClick={onToggle}>
+                         <h3 className="text-xs font-bold text-gray-300 uppercase tracking-widest flex items-center gap-2">{icon} {title}</h3>
+                         <div className={`transform transition-transform duration-300 text-gray-400 ${isOpen ? 'rotate-180' : ''}`}><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="6 9 12 15 18 9"></polyline></svg></div>
+                     </div>
+                     <div className={`collapsible-container ${isOpen ? 'expanded' : 'collapsed'}`}>
+                         <div className="p-4 pt-0">{children}</div>
+                     </div>
+                 </div>
+             );
         };
 
-        // --- Icons (Functional Components) ---
-        const PlayIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>;
-        const PauseIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg>;
-        const SearchIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>;
-        const SettingsIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>;
-        const FilterIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon></svg>;
-        const GamepadIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="6" y1="12" x2="10" y2="12"></line><line x1="8" y1="10" x2="8" y2="14"></line><line x1="15" y1="13" x2="15.01" y2="13"></line><line x1="18" y1="11" x2="18.01" y2="11"></line><rect x="2" y="6" width="20" height="12" rx="2"></rect></svg>;
-        const MonitorIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect><line x1="8" y1="21" x2="16" y2="21"></line><line x1="12" y1="17" x2="12" y2="21"></line></svg>;
-        const DollarIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="1" x2="12" y2="23"></line><path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>;
-        const UserIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>;
-        const ExternalLinkIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>;
-        const TrophyIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 21h8v-2l1-1v-4h-10v4l1 1v2z"></path><path d="M12 2a6 6 0 0 1 6 6v7h-12v-7a6 6 0 0 1 6-6z"></path><path d="M18 11h2a2 2 0 0 0 2-2v-2a2 2 0 0 0-2-2h-2"></path><path d="M6 11h-2a2 2 0 0 1-2-2v-2a2 2 0 0 1 2-2h2"></path></svg>;
-        const ChartIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>;
-        const DiceIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="9" cy="9" r="1"></circle><circle cx="15" cy="15" r="1"></circle></svg>;
-        const CloseIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>;
-        const ChevronDownIcon = () => <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>;
-
-        // --- Main UI Application ---
+        // --- Main App Component ---
         const App = () => {
             const minYear = 1970;
             const maxYear = 2025; 
@@ -843,129 +832,38 @@
             const [year, setYear] = useState(minYear);
             const [isPlaying, setIsPlaying] = useState(false);
             const [searchQuery, setSearchQuery] = useState("");
-            const [showSearch, setShowSearch] = useState(false);
             
-            const [selectedEvent, setSelectedEvent] = useState(null);
-            const [rotationSpeed, setRotationSpeed] = useState(0.5);
-            const [playbackSpeed, setPlaybackSpeed] = useState(1200);
-            const [autoFocus, setAutoFocus] = useState(false); 
+            // UI Toggles
+            const [showSearch, setShowSearch] = useState(false);
             const [showSettings, setShowSettings] = useState(false);
             const [showFilters, setShowFilters] = useState(false);
+            const [mobileTab, setMobileTab] = useState(null); 
             
+            // Globe Settings
+            const [rotationSpeed, setRotationSpeed] = useState(0.5);
+            const [playbackSpeed, setPlaybackSpeed] = useState(1200);
             const [markerScale, setMarkerScale] = useState(1);
+            const [autoFocus, setAutoFocus] = useState(false); // DEFAULT FALSE as requested in turn 5
             const [showStars, setShowStars] = useState(true);
             const [showClouds, setShowClouds] = useState(true);
             const [atmosphereIntensity, setAtmosphereIntensity] = useState(1);
-            const [retroMode, setRetroMode] = useState(false);
             const [constellations, setConstellations] = useState(false);
             const [theme, setTheme] = useState('realistic');
-
+            const [retroMode, setRetroMode] = useState(false);
+            
+            const [selectedEvent, setSelectedEvent] = useState(null);
+            
+            // Desktop Panel States
             const [isStatsOpen, setIsStatsOpen] = useState(true);
             const [isGraphOpen, setIsGraphOpen] = useState(true);
             const [isLeaderboardOpen, setIsLeaderboardOpen] = useState(true);
-            
-            const [mobileTab, setMobileTab] = useState(null); 
 
-            useEffect(() => {
-                if (window.innerWidth > 768) {
-                    setIsStatsOpen(true);
-                    setIsGraphOpen(true);
-                    setIsLeaderboardOpen(true);
-                }
-            }, []);
+            // Filters
+            const [activeFilters, setActiveFilters] = useState({ platform: "All", genre: "All", region: "All" });
 
-            const [activeFilters, setActiveFilters] = useState({
-                platform: "All",
-                genre: "All",
-                region: "All"
-            });
-            
             const popupRef = useRef(null);
 
-            useEffect(() => {
-                const handleKeyDown = (e) => {
-                    if (e.target.tagName === 'INPUT') return; 
-                    switch(e.key) {
-                        case ' ':
-                            e.preventDefault();
-                            setIsPlaying(prev => !prev);
-                            break;
-                        case 'ArrowLeft':
-                            setYear(prev => Math.max(minYear, prev - 1));
-                            setIsPlaying(false);
-                            break;
-                        case 'ArrowRight':
-                            setYear(prev => Math.min(maxYear, prev + 1));
-                            setIsPlaying(false);
-                            break;
-                        case 'f':
-                        case 'F':
-                            setAutoFocus(prev => !prev);
-                            break;
-                    }
-                };
-                window.addEventListener('keydown', handleKeyDown);
-                return () => window.removeEventListener('keydown', handleKeyDown);
-            }, []);
-
-            useEffect(() => {
-                let interval;
-                if (isPlaying) {
-                    interval = setInterval(() => {
-                        setYear(prev => {
-                            if (prev >= maxYear) {
-                                setIsPlaying(false);
-                                return maxYear;
-                            }
-                            return prev + 1;
-                        });
-                    }, playbackSpeed);
-                }
-                return () => clearInterval(interval);
-            }, [isPlaying, playbackSpeed]);
-
-            const visibleEvents = useMemo(() => {
-                return milestones.filter(m => {
-                    if (m.year > year) return false;
-                    if (activeFilters.platform !== "All" && m.platform !== activeFilters.platform) return false;
-                    if (activeFilters.genre !== "All" && m.genre !== activeFilters.genre) return false;
-                    if (activeFilters.region !== "All" && m.region !== activeFilters.region) return false;
-                    return true;
-                });
-            }, [year, activeFilters]);
-
-            useEffect(() => {
-                if (isPlaying) {
-                     const eventsThisYear = visibleEvents.filter(m => m.year === year);
-                     if (eventsThisYear.length > 0) {
-                         setSelectedEvent(eventsThisYear[eventsThisYear.length - 1]);
-                     }
-                }
-            }, [year, isPlaying, visibleEvents]);
-
-            const filteredSearch = useMemo(() => {
-                if (!searchQuery) return [];
-                return milestones.filter(m => 
-                    m.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    m.dev.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                    m.loc.toLowerCase().includes(searchQuery.toLowerCase())
-                );
-            }, [searchQuery]);
-
-            const handleSearchSelect = (selectedYear) => {
-                setYear(selectedYear);
-                setSearchQuery("");
-                setShowSearch(false);
-                setIsPlaying(false);
-                const evt = milestones.find(m => m.year === selectedYear);
-                if(evt) setSelectedEvent(evt);
-            };
-            
-            const handleMarkerClick = (data) => {
-                setSelectedEvent(data);
-                setIsPlaying(false);
-            };
-
+            // FUNCTIONS DEFINED BEFORE USE
             const togglePlay = () => {
                 if (year >= maxYear) setYear(minYear);
                 setIsPlaying(!isPlaying);
@@ -985,253 +883,234 @@
                 setIsPlaying(false);
             }
 
+            const handleSearchSelect = (selectedYear) => {
+                setYear(selectedYear);
+                setSearchQuery("");
+                setShowSearch(false);
+                setIsPlaying(false);
+                const evt = milestones.find(m => m.year === selectedYear);
+                if(evt) setSelectedEvent(evt);
+            };
+            
+            const handleMarkerClick = (data) => {
+                setSelectedEvent(data);
+                setIsPlaying(false);
+            };
+
+            // Init for Desktop
+            useEffect(() => {
+                if (window.innerWidth < 768) {
+                    setIsStatsOpen(false); setIsGraphOpen(false); setIsLeaderboardOpen(false);
+                }
+            }, []);
+
+            // Playback Timer
+            useEffect(() => {
+                let interval;
+                if (isPlaying) {
+                    interval = setInterval(() => {
+                        setYear(prev => {
+                            if (prev >= maxYear) { setIsPlaying(false); return maxYear; }
+                            return prev + 1;
+                        });
+                    }, playbackSpeed);
+                }
+                return () => clearInterval(interval);
+            }, [isPlaying, playbackSpeed]);
+
+            // Filter Data
+            const visibleEvents = useMemo(() => {
+                return milestones.filter(m => {
+                    if (m.year > year) return false;
+                    if (activeFilters.platform !== "All" && m.platform !== activeFilters.platform) return false;
+                    if (activeFilters.genre !== "All" && m.genre !== activeFilters.genre) return false;
+                    if (activeFilters.region !== "All" && m.region !== activeFilters.region) return false;
+                    return true;
+                });
+            }, [year, activeFilters]);
+
+            // Auto-Select Event on Play
+            useEffect(() => {
+                if (isPlaying) {
+                    const eventsThisYear = visibleEvents.filter(m => m.year === year);
+                    if (eventsThisYear.length > 0) setSelectedEvent(eventsThisYear[eventsThisYear.length - 1]);
+                }
+            }, [year, isPlaying, visibleEvents]);
+
+            // Search
+            const filteredSearch = useMemo(() => {
+                if (!searchQuery) return [];
+                return milestones.filter(m => m.title.toLowerCase().includes(searchQuery.toLowerCase()));
+            }, [searchQuery]);
+
             const currentStats = getStatsForYear(year);
             const leaderboard = getLeaderboardData(year);
 
-            // Mobile Content Renderer
+            // Render Mobile Content Helper
             const renderMobileContent = () => {
-                switch(mobileTab) {
-                    case 'stats':
-                        return (
-                            <div className="space-y-4">
-                                <div className="flex justify-between items-center border-b border-white/20 pb-2 mb-2">
-                                    <h3 className="text-sm font-bold text-blue-300 uppercase flex items-center gap-2"><TrophyIcon/> Industry Status ({year})</h3>
-                                    <button onClick={() => setMobileTab(null)} className="p-2 bg-white/10 rounded-full"><CloseIcon size={20}/></button>
-                                </div>
-                                <div className="stats-item flex items-center gap-3">
-                                    <div className="p-2 bg-blue-900/30 rounded-lg text-blue-400"><GamepadIcon size={16}/></div>
-                                    <div><div className="text-[10px] text-gray-400 uppercase">Platform</div><div className="text-xs font-bold text-white">{currentStats.platform}</div></div>
-                                </div>
-                                <div className="stats-item flex items-center gap-3">
-                                    <div className="p-2 bg-green-900/30 rounded-lg text-green-400"><DollarIcon size={16}/></div>
-                                    <div><div className="text-[10px] text-gray-400 uppercase">Model</div><div className="text-xs font-bold text-white">{currentStats.model}</div></div>
-                                </div>
-                                <div className="stats-item flex items-center gap-3">
-                                    <div className="p-2 bg-orange-900/30 rounded-lg text-orange-400"><UserIcon size={16}/></div>
-                                    <div><div className="text-[10px] text-gray-400 uppercase">Players</div><div className="text-xs font-bold text-white">{currentStats.players}</div></div>
-                                </div>
-                            </div>
-                        );
-                    case 'leaderboard':
-                        return (
-                            <div className="space-y-3">
-                                <div className="flex justify-between items-center border-b border-white/20 pb-2 mb-2">
-                                    <h3 className="text-sm font-bold text-blue-300 uppercase flex items-center gap-2"><ChartIcon/> Market Share ({year})</h3>
-                                    <button onClick={() => setMobileTab(null)} className="p-2 bg-white/10 rounded-full"><CloseIcon size={20}/></button>
-                                </div>
-                                {leaderboard.sort((a,b) => b.share - a.share).map((item, index) => (
-                                    <div key={item.name} className="relative">
-                                        <div className="flex justify-between items-end mb-1">
-                                            <div className="flex items-center gap-2">
-                                                <div className="w-6 h-6 flex items-center justify-center bg-white/10 rounded p-1"><img src={platformLogos[item.key]} alt={item.name} className="w-full h-full object-contain" /></div>
-                                                <span className="text-xs font-bold text-white">{item.name}</span>
-                                            </div>
-                                            <span className="text-[10px] text-gray-400 font-mono">{item.share}%</span>
-                                        </div>
-                                        <div className="w-full h-1 bg-gray-800 rounded-full overflow-hidden"><div className="h-full rounded-full bar-fill" style={{width: `${item.share}%`, backgroundColor: item.color}}></div></div>
-                                    </div>
-                                ))}
-                            </div>
-                        );
-                    case 'graph':
-                        return (
-                            <div className="space-y-2">
-                                <div className="flex justify-between items-center border-b border-white/20 pb-2 mb-2">
-                                    <h3 className="text-sm font-bold text-blue-300 uppercase flex items-center gap-2"><DollarIcon/> Player Growth</h3>
-                                    <button onClick={() => setMobileTab(null)} className="p-2 bg-white/10 rounded-full"><CloseIcon size={20}/></button>
-                                </div>
-                                <GamersGraph currentYear={year} minYear={minYear} maxYear={maxYear} />
-                            </div>
-                        );
-                    default: return null;
-                }
+                 if (mobileTab === 'stats') {
+                     return (
+                         <div className="space-y-4">
+                             <div className="flex justify-between items-center border-b border-white/20 pb-2 mb-2"><h3 className="text-sm font-bold text-blue-300 uppercase flex items-center gap-2"><TrophyIcon/> Status ({year})</h3></div>
+                             <div className="grid grid-cols-2 gap-4">
+                                 <div><div className="text-[10px] text-gray-400">Platform</div><div className="text-xs font-bold">{currentStats.platform}</div></div>
+                                 <div><div className="text-[10px] text-gray-400">Tech</div><div className="text-xs font-bold">{currentStats.gfx}</div></div>
+                                 <div><div className="text-[10px] text-gray-400">Model</div><div className="text-xs font-bold">{currentStats.model}</div></div>
+                                 <div><div className="text-[10px] text-gray-400">Players</div><div className="text-xs font-bold">{currentStats.players}</div></div>
+                             </div>
+                         </div>
+                     )
+                 }
+                 if (mobileTab === 'leaderboard') {
+                     return (
+                         <div className="space-y-2">
+                             <div className="flex justify-between items-center border-b border-white/20 pb-2 mb-2"><h3 className="text-sm font-bold text-blue-300 uppercase flex items-center gap-2"><ChartIcon/> Share ({year})</h3></div>
+                             {leaderboard.sort((a,b) => b.share - a.share).map((item) => (
+                                 <div key={item.name} className="relative">
+                                     <div className="flex justify-between text-xs mb-1">
+                                         <span className="flex items-center gap-2"><img src={platformLogos[item.key]} className="w-4 h-4 object-contain"/> {item.name}</span>
+                                         <span>{item.share}%</span>
+                                     </div>
+                                     <div className="w-full h-1 bg-gray-800 rounded-full"><div className="h-full rounded-full" style={{width: `${item.share}%`, backgroundColor: item.color}}></div></div>
+                                 </div>
+                             ))}
+                         </div>
+                     )
+                 }
+                 if (mobileTab === 'graph') {
+                     return (
+                         <div className="space-y-2">
+                              <div className="flex justify-between items-center border-b border-white/20 pb-2 mb-2"><h3 className="text-sm font-bold text-blue-300 uppercase flex items-center gap-2"><DollarIcon/> Growth</h3></div>
+                              <GamersGraph currentYear={year} minYear={minYear} maxYear={maxYear} />
+                         </div>
+                     )
+                 }
+                 return null;
             };
 
             return (
                 <div className="relative w-full h-full text-white font-sans overflow-hidden">
-                    
                     {retroMode && <div className="scanlines"></div>}
                     
-                    {/* Modal Backdrop for Mobile */}
+                    {/* Backdrop */}
                     {(mobileTab || (showSearch && window.innerWidth < 640) || (showFilters && window.innerWidth < 640) || (showSettings && window.innerWidth < 640)) && 
                         <div className="fixed inset-0 z-40 modal-backdrop transition-opacity" onClick={() => { setMobileTab(null); setShowSearch(false); setShowFilters(false); setShowSettings(false); }}></div>
                     }
 
                     <Globe 
-                        currentYear={year} 
-                        popupRef={popupRef} 
-                        selectedEvent={selectedEvent}
-                        onMarkerClick={handleMarkerClick}
-                        rotationSpeed={rotationSpeed}
-                        autoFocus={autoFocus}
-                        visibleEvents={visibleEvents}
-                        markerScale={markerScale}
-                        showStars={showStars}
-                        showClouds={showClouds}
-                        atmosphereIntensity={atmosphereIntensity}
-                        constellations={constellations}
-                        theme={theme}
+                        currentYear={year} popupRef={popupRef} selectedEvent={selectedEvent} onMarkerClick={handleMarkerClick}
+                        rotationSpeed={rotationSpeed} autoFocus={autoFocus} visibleEvents={visibleEvents} markerScale={markerScale}
+                        showStars={showStars} showClouds={showClouds} atmosphereIntensity={atmosphereIntensity} constellations={constellations} theme={theme}
                     />
 
-                    {/* --- TOP UI --- */}
-                    <div className="absolute top-0 left-0 w-full z-20 pointer-events-none flex flex-col gap-2 p-4 pt-10 sm:pt-4">
-                        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+                    {/* TOP BAR */}
+                    <div className="fixed top-0 left-0 w-full z-50 pointer-events-none p-4 flex flex-col gap-2">
+                        <div className="flex justify-between items-start">
                             <div className="glass-panel px-4 py-2 rounded-lg pointer-events-auto border-l-2 border-blue-500">
-                                <h1 className="text-xl font-bold tracking-widest text-white">GAME_HISTORY_GLOBE</h1>
-                                <div className="text-xs text-blue-400 font-mono">EARTH SIMULATION // {year}</div>
+                                <h1 className="text-lg md:text-xl font-bold tracking-widest text-white">GAME_HISTORY</h1>
+                                <div className="text-xs text-blue-400 font-mono">{year}</div>
                             </div>
-
                             <div className="flex gap-2 pointer-events-auto">
-                                <button onClick={jumpToRandom} title="Random Event" className="glass-panel p-3 rounded-full hover:bg-white/10 transition-colors"><DiceIcon /></button>
-                                <button onClick={() => setShowFilters(!showFilters)} title="Filters" className={`glass-panel p-3 rounded-full hover:bg-white/10 transition-colors ${showFilters ? 'bg-white/20' : ''}`}><FilterIcon /></button>
-                                <button onClick={() => setShowSettings(!showSettings)} title="Settings" className={`glass-panel p-3 rounded-full hover:bg-white/10 transition-colors ${showSettings ? 'bg-white/20' : ''}`}><SettingsIcon /></button>
-                                <button onClick={() => setShowSearch(!showSearch)} title="Search" className="glass-panel p-3 rounded-full hover:bg-white/10 transition-colors"><SearchIcon /></button>
+                                <button onClick={jumpToRandom} className="glass-panel p-2 rounded-full hover:bg-white/10"><DiceIcon/></button>
+                                <button onClick={() => setShowFilters(!showFilters)} className={`glass-panel p-2 rounded-full ${showFilters?'bg-white/20':''}`}><FilterIcon/></button>
+                                <button onClick={() => setShowSettings(!showSettings)} className={`glass-panel p-2 rounded-full ${showSettings?'bg-white/20':''}`}><SettingsIcon/></button>
+                                <button onClick={() => setShowSearch(!showSearch)} className="glass-panel p-2 rounded-full hover:bg-white/10"><SearchIcon/></button>
                             </div>
                         </div>
-
-                        <div className="flex gap-1 justify-start sm:justify-center pointer-events-auto overflow-x-auto pb-2 no-scrollbar">
-                            {eras.map(era => (
-                                <button 
-                                    key={era.name}
-                                    onClick={() => jumpToEra(era.start)}
-                                    className={`glass-panel px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${year >= era.start && year <= era.end ? 'bg-blue-600/50 border-blue-400 text-white' : 'border-transparent text-gray-400 hover:text-white'}`}
-                                >
-                                    {era.icon} {era.name}
+                        {/* Eras (Horizontal Scroll) */}
+                        <div className="flex gap-2 overflow-x-auto pb-2 pointer-events-auto no-scrollbar mask-gradient">
+                            {eras.map(e => (
+                                <button key={e.name} onClick={() => jumpToEra(e.start)} className={`glass-panel px-3 py-1 rounded-full text-xs whitespace-nowrap border ${year >= e.start && year <= e.end ? 'border-blue-400 bg-blue-900/40' : 'border-transparent'}`}>
+                                    {e.icon} {e.name}
                                 </button>
                             ))}
                         </div>
                     </div>
 
-                    {/* --- DROPDOWN MENUS --- */}
-                    <div className="absolute top-20 right-4 z-50 flex flex-col items-end pointer-events-auto gap-2">
-                        {showSearch && (
-                            <div className={`glass-panel p-4 animate-card z-50 ${window.innerWidth < 640 ? 'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-11/12 rounded-xl' : 'absolute top-0 right-0 w-72 rounded-lg'}`}>
-                                <div className="flex justify-between items-center mb-2">
-                                    <span className="text-xs text-gray-400">Search</span>
-                                    <button onClick={() => setShowSearch(false)}><CloseIcon size={16}/></button>
-                                </div>
-                                <input type="text" placeholder="Find game..." className="w-full bg-black/50 border border-white/20 rounded p-2 text-sm text-white focus:outline-none focus:border-blue-500" value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} autoFocus />
-                                <div className="max-h-60 overflow-y-auto mt-2 space-y-1 custom-scrollbar">
-                                    {filteredSearch.map((m, idx) => (
-                                        <div key={idx} onClick={() => { handleSearchSelect(m.year); setShowSearch(false); }} className="p-2 hover:bg-white/10 rounded cursor-pointer text-sm flex justify-between">
-                                            <span>{m.title}</span><span className="text-gray-400 text-xs">{m.year}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {showFilters && (
-                            <div className={`glass-panel p-4 animate-card z-50 space-y-4 ${window.innerWidth < 640 ? 'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-11/12 rounded-xl' : 'absolute top-0 right-0 w-64 rounded-lg'}`}>
-                                <div className="flex justify-between items-center">
-                                    <h3 className="text-xs font-bold text-blue-300 uppercase flex items-center gap-2"><FilterIcon size={12}/> Filters</h3>
-                                    <button onClick={() => setShowFilters(false)}><CloseIcon size={16}/></button>
-                                </div>
-                                <div>
-                                    <div className="text-xs text-gray-400 mb-1 flex items-center gap-1"><GamepadIcon/> Platform</div>
-                                    <select className="w-full bg-black/50 border border-white/20 rounded p-1 text-xs" value={activeFilters.platform} onChange={(e) => setActiveFilters({...activeFilters, platform: e.target.value})}>
-                                        <option value="All">All Platforms</option><option value="Arcade">Arcade</option><option value="Console">Console</option><option value="PC">PC</option><option value="Mobile">Mobile</option><option value="Online">Online</option>
-                                    </select>
-                                </div>
-                                <div>
-                                    <div className="text-xs text-gray-400 mb-1 flex items-center gap-1">🌍 Region</div>
-                                    <select className="w-full bg-black/50 border border-white/20 rounded p-1 text-xs" value={activeFilters.region} onChange={(e) => setActiveFilters({...activeFilters, region: e.target.value})}>
-                                        <option value="All">Global</option><option value="Japan">Japan</option><option value="USA">USA</option><option value="Europe">Europe</option><option value="China">China</option>
-                                    </select>
-                                </div>
-                            </div>
-                        )}
-
-                        {showSettings && (
-                            <div className={`glass-panel p-4 animate-card z-50 flex flex-col gap-4 custom-scrollbar ${window.innerWidth < 640 ? 'fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-11/12 max-h-[80vh] overflow-y-auto rounded-xl' : 'absolute top-0 right-0 w-72 max-h-[70vh] rounded-lg overflow-y-auto'}`}>
-                                <div className="flex justify-between items-center">
-                                    <span className="text-xs text-gray-400">Settings</span>
-                                    <button onClick={() => setShowSettings(false)}><CloseIcon size={16}/></button>
-                                </div>
-                                <div>
-                                    <div className="text-xs text-blue-300 font-bold mb-2 uppercase">Theme</div>
-                                    <div className="flex gap-2">
-                                        {['realistic', 'hologram', 'matrix'].map(t => (
-                                            <button key={t} onClick={() => setTheme(t)} className={`flex-1 text-[10px] py-1 rounded border capitalize ${theme === t ? 'bg-blue-600 border-blue-400' : 'border-gray-600 hover:bg-white/10'}`}>{t}</button>
-                                        ))}
-                                    </div>
-                                </div>
-                                {[
-                                    { label: "Earth Rotation", val: rotationSpeed, set: setRotationSpeed, min: 0, max: 2, step: 0.1 },
-                                    { label: "Timeline Speed", val: 3000 - playbackSpeed, set: (v) => setPlaybackSpeed(3000 - v), min: 200, max: 2500, step: 100 },
-                                    { label: "Marker Size", val: markerScale, set: setMarkerScale, min: 0.5, max: 2, step: 0.1 },
-                                    { label: "Atmosphere", val: atmosphereIntensity, set: setAtmosphereIntensity, min: 0, max: 3, step: 0.1 }
-                                ].map((s, i) => (
-                                    <div key={i}><div className="flex justify-between text-xs text-blue-300 font-bold mb-1 uppercase"><span>{s.label}</span></div><input type="range" min={s.min} max={s.max} step={s.step} value={s.val} onChange={(e) => s.set(parseFloat(e.target.value))} className="w-full" /></div>
-                                ))}
-                                {[
-                                    { label: "Constellation Lines", val: constellations, set: setConstellations },
-                                    { label: "Show Stars", val: showStars, set: setShowStars },
-                                    { label: "Show Clouds", val: showClouds, set: setShowClouds },
-                                    { label: "Retro CRT Mode", val: retroMode, set: setRetroMode, color: "text-purple-400" },
-                                    { label: "Auto-Focus Event", val: autoFocus, set: setAutoFocus }
-                                ].map((t, i) => (
-                                    <div key={i} className="flex items-center justify-between border-t border-white/10 pt-2">
-                                        <span className={`text-xs font-bold uppercase ${t.color || "text-blue-300"}`}>{t.label}</span>
-                                        <label className="relative inline-block w-10 h-5">
-                                            <input type="checkbox" checked={t.val} onChange={(e) => t.set(e.target.checked)} className="opacity-0 w-0 h-0 toggle-checkbox" />
-                                            <span className="toggle-label absolute cursor-pointer top-0 left-0 right-0 bottom-0 bg-gray-700 rounded-full transition-all duration-300"></span>
-                                            <span className={`absolute left-1 top-1 w-3 h-3 bg-white rounded-full transition-all duration-300 ${t.val ? 'translate-x-5' : ''}`}></span>
-                                        </label>
-                                    </div>
-                                ))}
-                            </div>
-                        )}
+                    {/* DESKTOP SIDE PANELS */}
+                    <div className="absolute top-32 left-4 z-20 hidden md:flex flex-col gap-2 max-h-[calc(100vh-160px)] overflow-y-auto pr-2 custom-scrollbar">
+                         <CollapsiblePanel title="Gamers" icon={<ChartIcon/>} isOpen={isGraphOpen} onToggle={() => setIsGraphOpen(!isGraphOpen)}><GamersGraph currentYear={year} minYear={minYear} maxYear={maxYear}/></CollapsiblePanel>
+                         <CollapsiblePanel title="Status" icon={<TrophyIcon/>} isOpen={isStatsOpen} onToggle={() => setIsStatsOpen(!isStatsOpen)}>
+                             <div className="space-y-3 text-sm">
+                                 <div className="flex justify-between"><span className="text-gray-400">Platform</span><span>{currentStats.platform}</span></div>
+                                 <div className="flex justify-between"><span className="text-gray-400">Tech</span><span>{currentStats.gfx}</span></div>
+                                 <div className="flex justify-between"><span className="text-gray-400">Model</span><span>{currentStats.model}</span></div>
+                                 <div className="flex justify-between"><span className="text-gray-400">Players</span><span>{currentStats.players}</span></div>
+                             </div>
+                         </CollapsiblePanel>
                     </div>
+
+                    <div className="absolute top-32 right-4 z-20 hidden md:flex flex-col gap-2 max-h-[calc(100vh-160px)] overflow-y-auto pl-2 custom-scrollbar">
+                        <CollapsiblePanel title="Share" icon={<TrophyIcon/>} isOpen={isLeaderboardOpen} onToggle={() => setIsLeaderboardOpen(!isLeaderboardOpen)} side="right">
+                             <div className="space-y-2">
+                                 {leaderboard.sort((a,b) => b.share - a.share).map(i => (
+                                     <div key={i.name} className="text-xs">
+                                         <div className="flex justify-between mb-1"><span className="flex items-center gap-1"><img src={platformLogos[i.key]} className="w-3 h-3 object-contain"/>{i.name}</span><span>{i.share}%</span></div>
+                                         <div className="h-1 bg-gray-800 rounded-full"><div className="h-full rounded-full transition-all duration-500" style={{width: `${i.share}%`, backgroundColor: i.color}}></div></div>
+                                     </div>
+                                 ))}
+                             </div>
+                        </CollapsiblePanel>
+                    </div>
+
+                    {/* MODALS */}
+                    {showSearch && (
+                        <div className={`glass-panel p-4 z-60 ${window.innerWidth < 640 ? 'fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-11/12 rounded-xl' : 'absolute top-24 right-4 w-72 rounded-lg'}`}>
+                            <div className="flex justify-between mb-2"><span className="text-xs text-gray-400">Search</span><button onClick={()=>setShowSearch(false)}><CloseIcon size={16}/></button></div>
+                            <input type="text" autoFocus className="w-full bg-black/50 border border-white/20 rounded p-2 text-sm text-white mb-2" placeholder="Search game..." value={searchQuery} onChange={e=>setSearchQuery(e.target.value)} />
+                            <div className="max-h-60 overflow-y-auto custom-scrollbar">
+                                {filteredSearch.map((m,i) => (
+                                    <div key={i} onClick={()=>{handleSearchSelect(m.year); setShowSearch(false);}} className="p-2 hover:bg-white/10 rounded cursor-pointer text-sm flex justify-between">
+                                        <span>{m.title}</span><span className="text-xs text-gray-400">{m.year}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    {showSettings && (
+                         <div className={`glass-panel p-4 z-60 flex flex-col gap-4 ${window.innerWidth < 640 ? 'fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-11/12 max-h-[80vh] overflow-y-auto rounded-xl' : 'absolute top-24 right-4 w-72 max-h-[70vh] overflow-y-auto rounded-lg'}`}>
+                             <div className="flex justify-between"><span className="text-xs text-gray-400">Settings</span><button onClick={()=>setShowSettings(false)}><CloseIcon/></button></div>
+                             <div>
+                                 <div className="text-xs text-blue-300 font-bold mb-2">THEME</div>
+                                 <div className="flex gap-2">
+                                     {['realistic', 'hologram', 'matrix'].map(t => <button key={t} onClick={()=>setTheme(t)} className={`flex-1 text-[10px] py-1 border rounded capitalize ${theme===t?'bg-blue-600 border-blue-400':'border-gray-600'}`}>{t}</button>)}
+                                 </div>
+                             </div>
+                             <div className="space-y-4">
+                                 <div><div className="text-xs text-blue-300 mb-1">Rotation</div><input type="range" min="0" max="2" step="0.1" value={rotationSpeed} onChange={e=>setRotationSpeed(parseFloat(e.target.value))} className="w-full"/></div>
+                                 <div><div className="text-xs text-blue-300 mb-1">Speed</div><input type="range" min="200" max="2500" step="100" value={3000-playbackSpeed} onChange={e=>setPlaybackSpeed(3000-parseInt(e.target.value))} className="w-full"/></div>
+                                 <div className="flex justify-between items-center"><span className="text-xs">Auto-Focus</span><input type="checkbox" checked={autoFocus} onChange={e=>setAutoFocus(e.target.checked)}/></div>
+                                 <div className="flex justify-between items-center"><span className="text-xs">Stars</span><input type="checkbox" checked={showStars} onChange={e=>setShowStars(e.target.checked)}/></div>
+                                 <div className="flex justify-between items-center"><span className="text-xs text-purple-400">Retro CRT</span><input type="checkbox" checked={retroMode} onChange={e=>setRetroMode(e.target.checked)}/></div>
+                             </div>
+                         </div>
+                    )}
                     
-                    {/* --- LEFT SIDE COLLAPSIBLE PANELS (Desktop) --- */}
-                    <div className="absolute top-36 left-4 z-20 pointer-events-none flex flex-col gap-2 max-h-[calc(100vh-180px)] overflow-y-auto pr-2 pb-4 hidden sm:flex">
-                        <CollapsiblePanel title="Total Gamers" icon={<ChartIcon/>} isOpen={isGraphOpen} onToggle={() => setIsGraphOpen(!isGraphOpen)}>
-                            <GamersGraph currentYear={year} minYear={minYear} maxYear={maxYear} />
-                        </CollapsiblePanel>
-                        <CollapsiblePanel title="Industry Status" icon={<TrophyIcon/>} isOpen={isStatsOpen} onToggle={() => setIsStatsOpen(!isStatsOpen)}>
-                            <div className="space-y-4">
-                                <div className="flex justify-between items-center text-xs border-b border-white/10 pb-1 mb-2"><span className="text-gray-400 uppercase tracking-widest">Year</span><span className="text-white font-mono font-bold text-lg">{year}</span></div>
-                                <div className="stats-item flex items-center gap-3"><div className="p-2 bg-blue-900/30 rounded-lg text-blue-400"><GamepadIcon size={16}/></div><div><div className="text-[10px] text-gray-400 uppercase">Dominant Platform</div><div className="text-xs font-bold text-white leading-tight">{currentStats.platform}</div></div></div>
-                                <div className="stats-item flex items-center gap-3"><div className="p-2 bg-purple-900/30 rounded-lg text-purple-400"><MonitorIcon size={16}/></div><div><div className="text-[10px] text-gray-400 uppercase">Graphics Tech</div><div className="text-xs font-bold text-white leading-tight">{currentStats.gfx}</div></div></div>
-                                <div className="stats-item flex items-center gap-3"><div className="p-2 bg-green-900/30 rounded-lg text-green-400"><DollarIcon size={16}/></div><div><div className="text-[10px] text-gray-400 uppercase">Business Model</div><div className="text-xs font-bold text-white leading-tight">{currentStats.model}</div></div></div>
-                                <div className="stats-item flex items-center gap-3"><div className="p-2 bg-orange-900/30 rounded-lg text-orange-400"><UserIcon size={16}/></div><div><div className="text-[10px] text-gray-400 uppercase">Global Players</div><div className="text-xs font-bold text-white leading-tight">{currentStats.players}</div></div></div>
-                            </div>
-                        </CollapsiblePanel>
-                    </div>
+                    {showFilters && (
+                        <div className={`glass-panel p-4 z-60 space-y-4 ${window.innerWidth < 640 ? 'fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-11/12 rounded-xl' : 'absolute top-24 right-4 w-64 rounded-lg'}`}>
+                             <div className="flex justify-between"><span className="text-xs text-gray-400">Filters</span><button onClick={()=>setShowFilters(false)}><CloseIcon/></button></div>
+                             <div>
+                                 <div className="text-xs text-gray-400 mb-1">Platform</div>
+                                 <select className="w-full bg-black/50 border border-white/20 rounded p-1 text-xs" value={activeFilters.platform} onChange={e=>setActiveFilters({...activeFilters, platform:e.target.value})}>
+                                     <option value="All">All</option><option value="Arcade">Arcade</option><option value="Console">Console</option><option value="PC">PC</option><option value="Mobile">Mobile</option>
+                                 </select>
+                             </div>
+                        </div>
+                    )}
 
-                    {/* --- RIGHT SIDE COLLAPSIBLE PANELS (Desktop) --- */}
-                    <div className="absolute top-36 right-4 z-20 pointer-events-none flex flex-col gap-2 max-h-[calc(100vh-180px)] overflow-y-auto pl-2 pb-4 hidden sm:flex">
-                        <CollapsiblePanel title="Market Share" icon={<TrophyIcon/>} isOpen={isLeaderboardOpen} onToggle={() => setIsLeaderboardOpen(!isLeaderboardOpen)} side="right">
-                            <div className="space-y-3 pt-2">
-                                {leaderboard.sort((a,b) => b.share - a.share).map((item, index) => (
-                                    <div key={item.name} className="relative">
-                                        <div className="flex justify-between items-end mb-1"><div className="flex items-center gap-2"><div className="w-10 h-10 flex items-center justify-center bg-white/10 rounded-md p-1.5"><img src={platformLogos[item.key]} alt={item.name} className="max-w-full max-h-full object-contain" /></div><span className="text-xs font-bold text-white leading-none">{item.name}</span></div><span className="text-[10px] text-gray-400 font-mono">{item.share}%</span></div>
-                                        <div className="w-full h-1.5 bg-gray-800 rounded-full overflow-hidden"><div className="h-full rounded-full bar-fill" style={{width: `${item.share}%`, backgroundColor: item.color}}></div></div>
-                                    </div>
-                                ))}
-                            </div>
-                        </CollapsiblePanel>
-                    </div>
-
-                    {/* --- MOBILE BOTTOM DOCK --- */}
-                    <div className="fixed bottom-28 left-0 w-full z-40 pointer-events-auto sm:hidden px-4 flex justify-center gap-4">
+                    {/* MOBILE BOTTOM DOCK */}
+                    <div className="fixed bottom-28 left-0 w-full z-40 pointer-events-auto sm:hidden px-4 flex justify-center gap-6">
                         {[
-                            { id: 'stats', icon: <TrophyIcon/> },
-                            { id: 'leaderboard', icon: <ChartIcon/> },
-                            { id: 'graph', icon: <DollarIcon/> }
-                        ].map(tab => (
-                            <button 
-                                key={tab.id}
-                                onClick={() => setMobileTab(mobileTab === tab.id ? null : tab.id)} 
-                                className={`glass-panel p-3 rounded-full shadow-lg backdrop-blur-md transition-all ${mobileTab === tab.id ? 'bg-blue-600 border-blue-400 scale-110' : 'hover:scale-105'}`}
-                            >
-                                {tab.icon}
+                            {id:'stats', icon:<TrophyIcon/>}, {id:'leaderboard', icon:<ChartIcon/>}, {id:'graph', icon:<DollarIcon/>}
+                        ].map(t => (
+                            <button key={t.id} onClick={()=>setMobileTab(mobileTab===t.id?null:t.id)} className={`glass-panel p-3 rounded-full shadow-lg transition-transform ${mobileTab===t.id?'bg-blue-600 border-blue-400 scale-110':''}`}>
+                                {t.icon}
                             </button>
                         ))}
                     </div>
 
-                    {/* --- MOBILE BOTTOM SHEET --- */}
+                    {/* MOBILE BOTTOM SHEET */}
                     <div className={`glass-panel bottom-sheet p-4 sm:hidden z-50 ${mobileTab ? 'open' : ''}`}>
                          {mobileTab && (
                             <div className="flex flex-col h-full">
@@ -1245,39 +1124,25 @@
                          )}
                     </div>
 
-                    {/* --- POP-UP CARD ATTACHED TO GLOBE --- */}
+                    {/* POPUP CARD */}
                     <div id="popup-card-container" ref={popupRef}>
                          {selectedEvent && (
                              <div className="popup-content">
-                                 <div className="glass-panel rounded-xl overflow-hidden border border-blue-500/30 shadow-2xl shadow-blue-900/40 backdrop-blur-xl">
-                                     <div className="h-16 w-full bg-black/60 flex items-center justify-center p-3 border-b border-white/5">
-                                         {selectedEvent.logo && <img src={selectedEvent.logo} alt="logo" className="max-h-full max-w-full object-contain filter drop-shadow-md" />}
+                                 <div className="glass-panel rounded-xl overflow-hidden border border-blue-500/30 shadow-2xl backdrop-blur-xl">
+                                     <div className="h-14 bg-black/60 flex items-center justify-center p-2 border-b border-white/5">
+                                         {selectedEvent.logo ? <img src={selectedEvent.logo} className="max-h-full object-contain filter drop-shadow-md"/> : <span className="font-bold text-lg">{selectedEvent.title}</span>}
                                      </div>
-                                     <div className="h-40 w-full bg-gray-900 relative overflow-hidden group cursor-pointer" onClick={() => window.open(`https://www.google.com/search?q=${selectedEvent.title}+game`, '_blank')}>
-                                         {selectedEvent.cover ? (
-                                             <img src={selectedEvent.cover} alt={selectedEvent.title} className="w-full h-full object-cover opacity-90 transition-transform duration-700 group-hover:scale-105" />
-                                         ) : <div className="w-full h-full flex items-center justify-center img-placeholder text-gray-600">No Image</div>}
+                                     <div className="h-36 bg-gray-900 relative overflow-hidden group">
+                                         {selectedEvent.cover ? <img src={selectedEvent.cover} className="w-full h-full object-cover opacity-80"/> : <div className="w-full h-full flex items-center justify-center text-gray-600">No Image</div>}
                                          <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-transparent to-transparent"></div>
-                                         <div className="absolute top-2 right-2">
-                                            <span className="bg-blue-600/90 text-[10px] font-bold px-2 py-1 rounded text-white uppercase tracking-wider shadow-lg backdrop-blur-md border border-white/20">{selectedEvent.platform}</span>
-                                         </div>
-                                         <div className="absolute bottom-2 left-3 w-full pr-6">
-                                             <div className="text-4xl font-bold text-white/20 font-mono tracking-tighter leading-none select-none">{selectedEvent.year}</div>
-                                         </div>
+                                         <div className="absolute bottom-2 left-3"><div className="text-4xl font-bold text-white/20 font-mono">{selectedEvent.year}</div></div>
+                                         <div className="absolute top-2 right-2"><span className="bg-blue-600/90 text-[10px] font-bold px-2 py-1 rounded">{selectedEvent.platform}</span></div>
                                      </div>
-                                     <div className="p-4 relative bg-black/20">
-                                         <div className="flex justify-between items-center text-xs text-blue-300 mb-3 font-mono border-b border-white/10 pb-2">
-                                             <span className="flex items-center gap-1">📍 {selectedEvent.loc}</span>
-                                             <span className="opacity-70">{selectedEvent.genre}</span>
-                                         </div>
-                                         {selectedEvent.impact && (
-                                             <div className="mb-3 text-xs font-bold text-green-400 uppercase tracking-wide flex items-center gap-2"><TrophyIcon size={12}/> {selectedEvent.impact}</div>
-                                         )}
-                                         <p className="text-sm text-gray-300 leading-relaxed font-light mb-4">{selectedEvent.desc}</p>
-                                         <div className="flex justify-between items-center mt-2">
-                                             <div className="text-xs text-blue-400/80 font-mono">DEV: <span className="text-white">{selectedEvent.dev}</span></div>
-                                             <a href={`https://en.wikipedia.org/wiki/Special:Search?search=${selectedEvent.title} video game`} target="_blank" className="flex items-center gap-1 text-[10px] bg-white/10 hover:bg-white/20 px-2 py-1 rounded transition-colors text-white">Learn More <ExternalLinkIcon/></a>
-                                         </div>
+                                     <div className="p-3 relative bg-black/20">
+                                         <div className="flex justify-between text-xs text-blue-300 mb-2"><span>📍 {selectedEvent.loc}</span><span>{selectedEvent.genre}</span></div>
+                                         {selectedEvent.impact && <div className="mb-2 text-xs font-bold text-green-400 flex items-center gap-1"><TrophyIcon size={10}/> {selectedEvent.impact}</div>}
+                                         <p className="text-xs text-gray-300 leading-relaxed mb-3">{selectedEvent.desc}</p>
+                                         <a href={`https://google.com/search?q=${selectedEvent.title} game`} target="_blank" className="block text-center text-xs bg-white/10 hover:bg-white/20 py-1.5 rounded transition-colors">Learn More</a>
                                      </div>
                                  </div>
                                  <div className="connector-line"></div>
@@ -1286,7 +1151,7 @@
                          )}
                     </div>
 
-                    {/* --- BOTTOM TIMELINE CONTROLS (FIXED) --- */}
+                    {/* TIMELINE PLAYER (Fixed Bottom) */}
                     <div className="fixed bottom-0 left-0 w-full p-4 sm:p-6 z-50 flex flex-col items-center pointer-events-none">
                         <div className="glass-panel w-full max-w-3xl rounded-full px-4 sm:px-6 py-3 sm:py-4 pointer-events-auto flex items-center gap-4 sm:gap-6 shadow-2xl shadow-black/80 border border-white/10 bg-black/60 backdrop-blur-xl">
                             <button onClick={togglePlay} className="w-10 h-10 sm:w-12 sm:h-12 flex items-center justify-center rounded-full bg-blue-600 hover:bg-blue-500 text-white transition-all hover:scale-105 shadow-lg shadow-blue-600/30 flex-shrink-0">
